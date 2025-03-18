@@ -2,6 +2,10 @@ package org.example;
 
 public class Main {
     public static void main(String[] args) {
-        System.out.println("");
+
+        Encryptor encryptor = new Encryptor("Szyfrowanie AES używa bloków 128-bitowych");
+
+        encryptor.encrypt();
+
     }
 }

@@ -1,17 +1,54 @@
 package org.example;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class Encryptor {
     public boolean choice; //true- tekst z konoloi (gui) ; false-test z pliku ; default- z konsoli
     public String plainText;
+    public byte[] plainBytes;
+    public List<byte[]> blocks = new ArrayList();
 
     //konstruktor
-    public Encryptor() {}
+    public Encryptor(String plainText) {
+        this.plainText = plainText;
+        plainBytes = plainText.getBytes(StandardCharsets.UTF_8);
+    }
 
-    //podziel tekst jawny na bloki po 16 bajtów
+    //metoda, która dzieli tekst jawny na bloki po 16 bajtów
+    public void textToBytesBlocks() {
+        // sprawdz dlugosc plainTextChars i uzupelnij zerami jesli brakuje
+        if(plainBytes.length%16!=0)
+        {
+            //cos tam
+        }
+        //petla for na wczytanie i dzialanie na blokach -> zrob mape i przypisz charom numer bloku? enum?
+        for (int i = 0; i < plainBytes.length; i += 16) {
+            byte[] block = Arrays.copyOfRange(plainBytes, i, i + 16);
+            blocks.add(block);
+        }
+    }
+
+    public void encrypt() {
+        textToBytesBlocks();
+        System.out.println("Ile bloków: " + blocks.size());
+        for (byte[] block : blocks) {
+            System.out.print("{");
+            for (byte b : block) {
+                //przekształcenie na zakres 0-255 (unsigned byte)
+                System.out.print(b & 0xFF);
+                System.out.print(", ");
+            }
+            System.out.print("}");
+            System.out.println();
+        }
+    }
 
     //wybierz długość klucza
-    public enum keyLenght{128,192,256};
-    public enum rounds {10,12,14};
+//    public enum keyLenght{128,192,256};
+//    public enum rounds {10,12,14};
 
     //1. key expansions??? - wygenerowanie z gory wszytskich kluczy??
 
