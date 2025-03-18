@@ -1,6 +1,9 @@
 package org.example;
 
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,10 +13,12 @@ public class Encryptor {
     public String plainText;
     public byte[] plainBytes;
     public List<byte[]> blocks = new ArrayList();
+    public int keySize;
 
     //konstruktor
-    public Encryptor(String plainText) {
+    public Encryptor(String plainText, int keySize) {
         this.plainText = plainText;
+        this.keySize = keySize;
         plainBytes = plainText.getBytes(StandardCharsets.UTF_8);
     }
 
@@ -29,6 +34,39 @@ public class Encryptor {
             byte[] block = Arrays.copyOfRange(plainBytes, i, i + 16);
             blocks.add(block);
         }
+    }
+
+    public SecretKey[] keyExpansion() {
+        KeyGenerator gen = null;
+
+        SecretKey[] keys = null;
+        int rounds = 0;
+        if (keySize == 128) {
+            rounds = 10;
+        }
+        if (keySize == 192) {
+            rounds = 12;
+        }
+        if (keySize == 256) {
+            rounds = 14;
+        }
+
+        try {
+            gen = KeyGenerator.getInstance("AES");
+            gen.init(128);
+            keys = new SecretKey[rounds+1];
+            for (int i = 0; i <rounds+1; i++) {
+                keys[i] = gen.generateKey();
+            }
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
+        return keys;
+    }
+
+    public void addRoundKey(byte[] block) {
+
     }
 
     public void encrypt() {
