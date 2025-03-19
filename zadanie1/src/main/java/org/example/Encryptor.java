@@ -8,13 +8,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+//NA TEN MOMENT PIERWSZY KLUCZ JEST GENEROWANY RAZEM Z RESZTĄ
 public class Encryptor {
     public boolean choice; //true- tekst z konoloi (gui) ; false-test z pliku ; default- z konsoli
     public String plainText;
     public byte[] plainBytes;
     public List<byte[]> blocks = new ArrayList();
     public int keySize;
-
+    public SecretKey[] keys=keyExpansion();
     //konstruktor
     public Encryptor(String plainText, int keySize) {
         this.plainText = plainText;
@@ -65,11 +66,22 @@ public class Encryptor {
         return keys;
     }
 
-    public void addRoundKey(byte[] block) {
+    //wykonuje operacje dla danego bloku i danej rundy
+    public void addRoundKey(byte[] block, int round) {
+        //cały blok jest XORowany z  wygenerowanym podkluczem.
+        //konwersja secretKey na byte żeby można było wykonać xor
+        byte[] roundKey = keys[round].getEncoded();
 
+        if (block.length != roundKey.length) {
+            throw new IllegalArgumentException("Block size and key size must match.");
+        }
+
+        for (int i = 0; i < block.length; i++) {
+            block[i] ^= roundKey[i]; // XORowanie bajtów
+        }
     }
 
-    public void encrypt() {
+    /*public void encrypt() {
         textToBytesBlocks();
         System.out.println("Ile bloków: " + blocks.size());
         for (byte[] block : blocks) {
@@ -82,15 +94,7 @@ public class Encryptor {
             System.out.print("}");
             System.out.println();
         }
-    }
-
-    //wybierz długość klucza
-//    public enum keyLenght{128,192,256};
-//    public enum rounds {10,12,14};
-
-    //1. key expansions??? - wygenerowanie z gory wszytskich kluczy??
-
-    //2.add round key
+    }*/
 
     //3. rundy
 
