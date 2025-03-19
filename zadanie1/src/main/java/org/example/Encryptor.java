@@ -15,7 +15,11 @@ public class Encryptor {
     public byte[] plainBytes;
     public List<byte[]> blocks = new ArrayList();
     public int keySize;
-    public SecretKey[] keys=keyExpansion();
+    public byte[] mainKey;
+    //pierwszy wymiar określa liczbę kluczy rundowych
+    //drugi wymiar to tablica bajtów reprezentujących klucz dla danej rundy
+    public byte[][] keys;
+
     //konstruktor
     public Encryptor(String plainText, int keySize) {
         this.plainText = plainText;
@@ -37,10 +41,25 @@ public class Encryptor {
         }
     }
 
-    public SecretKey[] keyExpansion() {
+    //generacja klucza głównego
+    public void mainKeyGenerate() {
         KeyGenerator gen = null;
+        try {
+            gen = KeyGenerator.getInstance("AES");
+            gen.init(keySize);
+            mainKey = gen.generateKey().getEncoded();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        SecretKey[] keys = null;
+    public void SubWord() {
+
+    }
+
+    //generacja podkluczy
+    public void keyExpansion() {
+
         int rounds = 0;
         if (keySize == 128) {
             rounds = 10;
@@ -52,36 +71,42 @@ public class Encryptor {
             rounds = 14;
         }
 
-        try {
-            gen = KeyGenerator.getInstance("AES");
-            gen.init(128);
-            keys = new SecretKey[rounds+1];
-            for (int i = 0; i <rounds+1; i++) {
-                keys[i] = gen.generateKey();
+        //podział klucza głównego na słowa
+        byte[][] words = new byte[keySize/32][];
+        for (int i = 0; i < keySize/32; i++) {
+            byte[] block = new byte[4];
+            for (int j = 0; j < 4; j ++) {
+                block[j] = mainKey[i*4+j];
             }
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            words[i] = block;
         }
 
-        return keys;
+        //DEBUGOWANIE
+        for (int i = 0; i < words.length; i++) {
+            System.out.println(Arrays.toString(words[i]));
+        }
+
+
+
+
+
+
     }
 
     //wykonuje operacje dla danego bloku i danej rundy
     public void addRoundKey(byte[] block, int round) {
         //cały blok jest XORowany z  wygenerowanym podkluczem.
-        //konwersja secretKey na byte żeby można było wykonać xor
-        byte[] roundKey = keys[round].getEncoded();
 
-        if (block.length != roundKey.length) {
+        if (block.length != keys.length) {
             throw new IllegalArgumentException("Block size and key size must match.");
         }
 
-        for (int i = 0; i < block.length; i++) {
-            block[i] ^= roundKey[i]; // XORowanie bajtów
-        }
+//        for (int i = 0; i < block.length; i++) {
+//            block[i] ^= keys[i]; // XORowanie bajtów
+//        }
     }
 
-    /*public void encrypt() {
+    public void encrypt() {
         textToBytesBlocks();
         System.out.println("Ile bloków: " + blocks.size());
         for (byte[] block : blocks) {
@@ -94,7 +119,7 @@ public class Encryptor {
             System.out.print("}");
             System.out.println();
         }
-    }*/
+    }
 
     //3. rundy
 
