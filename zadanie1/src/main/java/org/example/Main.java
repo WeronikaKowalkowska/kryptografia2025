@@ -6,7 +6,7 @@ import java.util.Arrays;
 public class Main {
     public static void main(String[] args) {
 
-        Encryptor encryptor = new Encryptor("Szyfrowanie AES używa bloków 128-bitowych", 128);
+        Encryptor encryptor = new Encryptor("Szyfrowanie AES używa bloków 128-bitowych", 256);
 
         encryptor.mainKeyGenerate();
         System.out.println("Main key: " + Arrays.toString(encryptor.mainKey));

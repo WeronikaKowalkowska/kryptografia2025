@@ -126,11 +126,9 @@ public class Encryptor {
         return output;
     }
 
-    //!!!PROBLEM Z CZĘŚCIĄ Z SubWord, BO POWINNA BYĆ CO 4, 6 LUB 8 SŁOWO!!!
     //gemeruje pojedynczy klucz dla numeru rundy przedazanego jako parament
     public byte[] generateKey(int round, byte[][] words) {
-        int howManyWords = words.length;
-        byte[] temp = new byte[howManyWords];
+        byte[] temp = new byte[4];
         byte[] key = new byte[keySize/8];
         byte[] rcon = intToByteTable(Rcon[round]);
 
