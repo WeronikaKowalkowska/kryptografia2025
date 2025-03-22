@@ -3,13 +3,15 @@ package org.example;
 import javax.crypto.KeyGenerator;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class NewEncryptor {
     public byte[] plainBytes;   //takest jawny zamieniony na bajty
     public int keySize;     //długość klucza
     public int rounds;      //ilość rund do wykonania na pojedynczym bloku tekstu
-    public byte[] mainKey;
+    public byte[] mainKey;  //klucz glowny
+    public ArrayList<byte[][]> blocksList;     //lista tablic bajtów tekstu jawnego podszielonego na 16bajtowe bloki
     //pierwszy wymiar określa liczbę kluczy rundowych; drugi wymiar to tablica bajtów reprezentujących klucz dla danej rundy
     public byte[][] roundKeys = new byte[rounds+1][];       //lista kluczy dla każdej rundy na blokach
     private static final int[] sbox = { 0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F,
@@ -154,6 +156,28 @@ public class NewEncryptor {
         return rotWord;
     }
 
+    public byte[] ShiftRow(byte[] row, int howMuch) {
+        byte[] temp = new byte[4];
+        switch (howMuch) {
+            case 1:
+                temp=RotWord(row);
+                break;
+            case 2:
+                temp[0]=row[2];
+                temp[1]=row[3];
+                temp[2]=row[0];
+                temp[3]=row[1];
+                break;
+            case 3:
+                temp[0]=row[3];
+                temp[1]=row[0];
+                temp[2]=row[1];
+                temp[3]=row[2];
+                break;
+        }
+        return temp;
+    }
+
     public byte SubByte(byte input) {
         int index = input & 0xFF;   //mapuje na zakres 0-255
         return (byte) sbox[index];  //podmien na odpowiedni bajt
@@ -178,9 +202,58 @@ public class NewEncryptor {
         }
     }
     //podział na dwuwymiarowe bloki
+    public void textToByteBlocks(){
+        int length = plainBytes.length;
+
+        //sprawdzenie i uzupełnienie zerami jeśli tekst nie jest wielokrotnościa 16 bajtów
+        if (length % 16 != 0) {
+            int padding = 16 - (length % 16);
+            byte[] paddedBytes = Arrays.copyOf(plainBytes, length + padding);
+            plainBytes = paddedBytes;
+        }
+
+        //podzial tekstu na bloki
+        for (int i = 0; i < plainBytes.length; i += 16) {
+            byte[][] block = new byte[4][4];
+
+            for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < 4; col++) {
+                    block[row][col] = plainBytes[i + (col * 4) + row];
+                }
+            }
+
+            blocksList.add(block);
+        }
+    }
 
     //wykonanie pierwszego addround key i zapetlenie
     public void encrypt(){
+        //pierwsza runda - add round key i xor bloku z pierwszym podkluczem
+        addRoundKey(blocksList.get(0),0);
+        //pozostałe rundy
+        for(int round=1;round<=rounds;round++){
+            byte[][] block = blocksList.get(round);
+            for(int row=0;row<4;row++){
+                for(int col=0;col<4;col++){
+                    block[row][col]=SubByte(block[row][col]);   //sub bytes
+                }
+            }
+            blocksList.set(round,block);    //podmiana bloku na dane z subbytes
+            for(int row=0;row<4;row++){
+                byte[] blockRow=new byte[4];
+                for(int col=0;col<4;col++){
+                    blockRow[col]=block[row][col];
+                }
+                if(row!=0){
+                    blockRow=ShiftRow(blockRow,row);
+                    for(int col=0;col<4;col++){
+                        block[row][col]=blockRow[col];  //shift rows
+                    }
+                }
+            }
+            
+        }
+
 
     }
 
