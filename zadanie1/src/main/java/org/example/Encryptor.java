@@ -215,7 +215,7 @@ public class Encryptor {
     }
 
     //wykonuje operacje dla danego bloku i danej rundy
-    public void addRoundKey(byte[] block, int round) {
+    public void addRoundKey(byte[][] block, int round) {
         //cały blok jest XORowany z  wygenerowanym podkluczem.
 
         if (block.length != keys.length) {
@@ -228,13 +228,13 @@ public class Encryptor {
     }
 
     //wykonaj pierwasza runde i reszte potem
-    public void encrypt() {
+   /* public void encrypt() {
         textToBytesBlocks();
         mainKeyGenerate();
         keyExpansion();
         addRoundKey(blocks[0],0);
         //pierwsza runda
-    }
+    }*/
 
     //3. rundy
 

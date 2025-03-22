@@ -168,6 +168,23 @@ public class NewEncryptor {
         return output;
     }
 
-    
+    //wykonuje operacje dla danego bloku i danej rundy
+    public void addRoundKey(byte[][] block, int round) {
+        //cały blok jest XORowany z  wygenerowanym podkluczem.
+        for (int row = 0; row < 4; row++) {
+            for (int col = 0; col < 4; col++) {
+                block[row][col] ^= roundKeys[round][row * 4 + col];
+            }
+        }
+    }
+    //podział na dwuwymiarowe bloki
+
+    //wykonanie pierwszego addround key i zapetlenie
+    public void encrypt(){
+
+    }
+
+
+
 
 }
