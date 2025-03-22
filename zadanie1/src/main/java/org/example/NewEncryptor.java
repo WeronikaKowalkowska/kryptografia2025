@@ -226,6 +226,23 @@ public class NewEncryptor {
         }
     }
 
+    public byte multiplyBy(byte b, int howMuch) {
+        switch (howMuch) {
+            case 1:
+                return b;
+            case 2:
+                int result = (b & 0xFF) << 1;
+                if ((b & 0x80) != 0) {  //jeśli MSB było 1 (przekroczenie 8 bitów)
+                    result ^= 0x1B;  //redukcja modulo 0x1B
+                }
+                return (byte) result;
+            case 3:
+                return (byte) (multiplyBy(b, 2) ^ b);
+
+        }
+        return 0;
+    }
+
     //wykonanie pierwszego addround key i zapetlenie
     public void encrypt(){
         //pierwsza runda - add round key i xor bloku z pierwszym podkluczem
@@ -238,7 +255,7 @@ public class NewEncryptor {
                     block[row][col]=SubByte(block[row][col]);   //sub bytes
                 }
             }
-            blocksList.set(round,block);    //podmiana bloku na dane z subbytes
+
             for(int row=0;row<4;row++){
                 byte[] blockRow=new byte[4];
                 for(int col=0;col<4;col++){
@@ -251,13 +268,40 @@ public class NewEncryptor {
                     }
                 }
             }
+
+            //mix columns
+            if(round!=rounds){
+                for(int col=0;col<4;col++){
+                    byte[] blockCol=new byte[4];
+                    for(int row=0;row<4;row++){
+                        blockCol[row]=block[row][col];
+                    }
+                    byte b0 = (byte) (multiplyBy(blockCol[0], 2) ^ multiplyBy(blockCol[1], 3) ^ multiplyBy(blockCol[2], 1) ^ multiplyBy(blockCol[3], 1));
+                    byte b1 = (byte) (multiplyBy(blockCol[0], 1) ^ multiplyBy(blockCol[1], 2) ^ multiplyBy(blockCol[2], 3) ^ multiplyBy(blockCol[3], 1));
+                    byte b2 = (byte) (multiplyBy(blockCol[0], 1) ^ multiplyBy(blockCol[1], 1) ^ multiplyBy(blockCol[2], 2) ^ multiplyBy(blockCol[3], 3));
+                    byte b3 = (byte) (multiplyBy(blockCol[0], 3) ^ multiplyBy(blockCol[1], 1) ^ multiplyBy(blockCol[2], 1) ^ multiplyBy(blockCol[3], 2));
+
+                    blockCol[0]=b0;
+                    blockCol[1]=b1;
+                    blockCol[2]=b2;
+                    blockCol[3]=b3;
+
+                    for(int row=0;row<4;row++){
+                        block[row][col]=blockCol[row];
+                    }
+
+                }
+            }
+
+            blocksList.set(round,block);//podmiana bloku na danepo operacjach
+
+            //add round key na koniec
+            addRoundKey(blocksList.get(round),round);
             
         }
 
 
     }
-
-
 
 
 }

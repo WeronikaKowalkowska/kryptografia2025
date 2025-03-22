@@ -16,11 +16,10 @@ public class JavaFxApp extends Application {
 
         URL fxmlLocation = getClass().getResource("/org/example/test.fxml");
         if (fxmlLocation == null) {
-            throw new RuntimeException("blabla!");
+            throw new RuntimeException("invalid fxml location");
         }
         Parent root = FXMLLoader.load(fxmlLocation);
-        //Parent root = FXMLLoader.load(getClass().getResource("/org/example/app1.fxml"));
-        primaryStage.setTitle("JavaFX Scene Builder Example");
+        primaryStage.setTitle("Cryptografy Application");
         primaryStage.setScene(new Scene(root, 600, 400));
         primaryStage.show();
     }
