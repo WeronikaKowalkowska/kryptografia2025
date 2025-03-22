@@ -1,0 +1,8 @@
+dodac zmienna rounds i przypisywac jej zminena w konstruktorze
+zrobic keys[rounds+1]
+blok jako tablica dwuwymiarowa
+            if (count == 4 && keySize == 256) {
+
+na konsultacje:
+rcon??
+co 8 slowo w dlugosci 256?

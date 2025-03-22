@@ -11,9 +11,10 @@ import java.util.List;
 //NA TEN MOMENT PIERWSZY KLUCZ JEST GENEROWANY RAZEM Z RESZTĄ
 public class Encryptor {
     public boolean choice; //true- tekst z konoloi (gui) ; false-test z pliku ; default- z konsoli
-    public String plainText;
-    public byte[] plainBytes;
-    public List<byte[]> blocks = new ArrayList();
+    public String plainText;    //tekst jawny podawany przez uzytkownika
+    public byte[] plainBytes;   //takest jawny zamieniony na bajty
+    public byte[][] singleBlock;    //pojedynczy blok tekstu jawnego w bajtach
+    public List<singleBlock> blocks = new ArrayList();   //tekst jawny w bajtach podzielony na bloki
     public int keySize;
     public byte[] mainKey;
     //pierwszy wymiar określa liczbę kluczy rundowych; drugi wymiar to tablica bajtów reprezentujących klucz dla danej rundy
@@ -151,12 +152,12 @@ public class Encryptor {
         //pozostałe słowa klucza
         while (count < words.length) {
             //dodatkowe SubWord (dla klucza 256)
-            if (count == 4 && keySize == 256) {
-                temp = SubWord(words[count]);
-                for (int j = 0; j < 4; j++) {
-                    key[i + j] = (byte) (key[i + j - 4] ^ temp[j]);
-                }
-            }
+//            if (count == 4 && keySize == 256) {
+//                temp = SubWord(words[count]);
+//                for (int j = 0; j < 4; j++) {
+//                    key[i + j] = (byte) (key[i + j - 4] ^ temp[j]);
+//                }
+//            }
            for (int j = 0; j < 4; j++) {
                key[i + j] = (byte) (key[i + j - 4] ^ words[count][j]);
            }
@@ -221,24 +222,18 @@ public class Encryptor {
             throw new IllegalArgumentException("Block size and key size must match.");
         }
 
-//        for (int i = 0; i < block.length; i++) {
-//            block[i] ^= keys[i]; // XORowanie bajtów
-//        }
+        for (int i = 0; i < block.length; i++) {
+            block[i] ^= keys[round][i]; // XORowanie bajtów
+        }
     }
 
+    //wykonaj pierwasza runde i reszte potem
     public void encrypt() {
         textToBytesBlocks();
-        System.out.println("Ile bloków: " + blocks.size());
-        for (byte[] block : blocks) {
-            System.out.print("{");
-            for (byte b : block) {
-                //przekształcenie na zakres 0-255 (unsigned byte)
-                System.out.print(b & 0xFF);
-                System.out.print(", ");
-            }
-            System.out.print("}");
-            System.out.println();
-        }
+        mainKeyGenerate();
+        keyExpansion();
+        addRoundKey(blocks[0],0);
+        //pierwsza runda
     }
 
     //3. rundy
