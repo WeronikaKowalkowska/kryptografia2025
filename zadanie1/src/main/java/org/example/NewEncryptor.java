@@ -303,5 +303,11 @@ public class NewEncryptor {
 
     }
 
+    public byte[][] getRoundKeys() {
+        return roundKeys;
+    }
 
+    public ArrayList<byte[][]> getBlocksList() {
+        return blocksList;
+    }
 }
