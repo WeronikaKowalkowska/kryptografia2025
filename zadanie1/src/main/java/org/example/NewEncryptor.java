@@ -12,6 +12,7 @@ public class NewEncryptor {
     public int rounds;      //ilość rund do wykonania na pojedynczym bloku tekstu
     public byte[] mainKey;  //klucz glowny
     public ArrayList<byte[][]> blocksList;     //lista tablic bajtów tekstu jawnego podszielonego na 16bajtowe bloki
+    public int padding; //ilosc dodanych zer do ostatniego bloku
     //pierwszy wymiar określa liczbę kluczy rundowych; drugi wymiar to tablica bajtów reprezentujących klucz dla danej rundy
     public byte[][] roundKeys = new byte[rounds+1][];       //lista kluczy dla każdej rundy na blokach
     private static final int[] sbox = { 0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F,
@@ -71,6 +72,7 @@ public class NewEncryptor {
         if (keySize == 256) {
             rounds = 14;
         }
+        textToByteBlocks();
         mainKeyGenerate();      //generacja klucza głównego
         //keyExpansion - kazdy blok używa tych samych kluczy rund
         keyExpansion();
@@ -207,8 +209,8 @@ public class NewEncryptor {
 
         //sprawdzenie i uzupełnienie zerami jeśli tekst nie jest wielokrotnościa 16 bajtów
         if (length % 16 != 0) {
-            int padding = 16 - (length % 16);
-            byte[] paddedBytes = Arrays.copyOf(plainBytes, length + padding);
+             this.padding = 16 - (length % 16);
+            byte[] paddedBytes = Arrays.copyOf(plainBytes, length + this.padding);
             plainBytes = paddedBytes;
         }
 
