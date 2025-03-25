@@ -20,7 +20,8 @@ import java.util.Optional;
 
 public class JavaFxApp extends Application {
     private int selectedKey;
-    private String textToEncrypt;
+    //private String textToEncrypt;
+    private byte[] textToEncrypt;
     private Stage primaryStage;
 
     @Override
@@ -33,9 +34,13 @@ public class JavaFxApp extends Application {
         }
         FXMLLoader loader = new FXMLLoader(fxmlLocation);
         Parent root = loader.load();
+        root.setStyle("-fx-background-color: pink;"); // Ustawienie koloru tła
+
 
         Button btnEncryptFile = (Button) root.lookup("#btnEncryptFile");
         Button btnEncryptText = (Button) root.lookup("#btnEncryptText");
+        //btnEncryptFile.setStyle("-fx-background-color: #91275e; -fx-text-fill: white;");
+        //btnEncryptText.setStyle("-fx-background-color: #91275e; -fx-text-fill: white;");
 
         if (btnEncryptFile != null) {
             btnEncryptFile.setOnAction(event -> {
@@ -44,7 +49,7 @@ public class JavaFxApp extends Application {
                 File file = fileChooser.showOpenDialog(primaryStage);
                 if (file != null) {
                     try {
-                        textToEncrypt = Files.readString(Path.of(file.getAbsolutePath()));
+                        textToEncrypt = Files.readAllBytes(Path.of(file.getAbsolutePath()));
                         System.out.println("Wybrano plik: " + file.getAbsolutePath());
                         openKeySelectionScene();
                     } catch (IOException e) {
@@ -65,7 +70,7 @@ public class JavaFxApp extends Application {
 
                 Optional<String> result = dialog.showAndWait();
                 result.ifPresent(text -> {
-                    textToEncrypt = text;
+                    textToEncrypt = text.getBytes();
                     openKeySelectionScene();
                 });
             });
@@ -119,13 +124,13 @@ public class JavaFxApp extends Application {
     }
 
     private void encryptText() {
-        if (textToEncrypt != null && !textToEncrypt.isEmpty()) {
+        //if (textToEncrypt != null && !textToEncrypt.isEmpty()) {
             Encryptor encryptor = new Encryptor(textToEncrypt, selectedKey);
             encryptor.encrypt();
             System.out.println("Zaszyfrowano: " + encryptor.getBlocksList());
-        } else {
-            System.err.println("Błąd: Brak tekstu do zaszyfrowania!");
-        }
+        //} else {
+           // System.err.println("Błąd: Brak tekstu do zaszyfrowania!");
+       // }
     }
 
     public static void main(String[] args) {

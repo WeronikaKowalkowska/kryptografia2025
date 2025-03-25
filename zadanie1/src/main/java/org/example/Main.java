@@ -4,7 +4,7 @@ public class Main {
     public static void main(String[] args) {
 
         int keysize = 128;
-        Encryptor encryptor = new Encryptor("Szyfrowanie AES używa bloków 128-bitowych", keysize);
+        Encryptor encryptor = new Encryptor("Szyfrowanie AES używa bloków 128-bitowych".getBytes(), keysize);
         encryptor.encrypt();
         String text = encryptor.joinEncryptedText();
         System.out.println("Wynik:");

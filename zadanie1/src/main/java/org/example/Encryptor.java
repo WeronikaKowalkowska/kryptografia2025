@@ -60,10 +60,11 @@ public class Encryptor {
             0x4D000000
     };
     //konstruktor
-    public Encryptor(String plainText, int keySize) {
+    public Encryptor(byte[] plainText, int keySize) {
 
         this.keySize = keySize;
-        plainBytes = plainText.getBytes(StandardCharsets.UTF_8);
+        //plainBytes = plainText.getBytes(StandardCharsets.UTF_8);
+        plainBytes = plainText;
         //przypisanie klasie ilości rund do wykonania w zależności od długości klucza
         if (keySize == 128) {
             rounds = 10;
