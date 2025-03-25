@@ -2,13 +2,14 @@ package org.example;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 
 public class Decryptor {
-    public int keySize;
-    public int rounds;
-    public byte[][] roundKeys=new byte[rounds+1][];
-    public byte[] cipherBytes;
-    public ArrayList<byte[][]> cipherBlocksList;
+    private int keySize;
+    private int rounds;
+    private byte[][] roundKeys=new byte[rounds+1][];
+    private byte[] cipherBytes;
+    private ArrayList<byte[][]> cipherBlocksList;
     private static final int[] invertedSbox = { 0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5,
             0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB, 0x7C, 0xE3,
             0x39, 0x82, 0x9B, 0x2F, 0xFF, 0x87, 0x34, 0x8E, 0x43, 0x44, 0xC4,
@@ -34,11 +35,11 @@ public class Decryptor {
             0x99, 0x61, 0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1,
             0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D };
 
-    public Decryptor(String cipherText,int keySize, byte[][] roundKeys) {
+    public Decryptor(String cipherText, int keySize, byte[][] roundKeys) {
 
         this.keySize=keySize;
-        cipherBytes=cipherText.getBytes(StandardCharsets.UTF_8);
-        //przypisanie klasie ilości rund do wykonania w zależności od dłufości klucza
+        cipherBytes= Base64.getDecoder().decode(cipherText.trim());
+        //przypisanie klasie ilości rund do wykonania w zależności od długości klucza
         if (keySize == 128) {
             rounds = 10;
         }
@@ -50,6 +51,8 @@ public class Decryptor {
         }
 
         this.roundKeys=reverseRoundKeys(roundKeys);
+        this.cipherBlocksList = new ArrayList<>();
+
         textToByteBlocks();
 
     }
@@ -79,8 +82,6 @@ public class Decryptor {
 
     //podział na dwuwymiarowe bloki
     public void textToByteBlocks(){
-        int length = cipherBytes.length;
-
         //podzial tekstu na bloki
         for (int i = 0; i < cipherBytes.length; i += 16) {
             byte[][] block = new byte[4][4];
@@ -209,7 +210,6 @@ public class Decryptor {
                         blockTemp[row][col]=InvertedSubByte(blockTemp[row][col]);   // INVERTED sub bytes
                     }
                 }
-                addRoundKey(cipherBlocksList.get(round),round);
                 //INVERTED MIX COULMNS
                 addRoundKey(blockTemp, round);    //add round key na koniec
                 cipherBlocksList.set(blockCount,blockTemp); //podmiana bloku na zmieniony po operacjach

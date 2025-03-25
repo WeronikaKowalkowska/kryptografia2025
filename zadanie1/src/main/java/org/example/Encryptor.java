@@ -1,20 +1,22 @@
 package org.example;
 
 import javax.crypto.KeyGenerator;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 
 public class Encryptor {
-    public byte[] plainBytes;   //takest jawny zamieniony na bajty
-    public int keySize;     //długość klucza
-    public int rounds;      //ilość rund do wykonania na pojedynczym bloku tekstu
-    public byte[] mainKey;  //klucz glowny
-    public ArrayList<byte[][]> blocksList;     //lista tablic bajtów tekstu jawnego podszielonego na 16bajtowe bloki
-    public int padding; //ilosc dodanych zer do ostatniego bloku
+    private byte[] plainBytes;   //takest jawny zamieniony na bajty
+    private int keySize;     //długość klucza
+    private int rounds;      //ilość rund do wykonania na pojedynczym bloku tekstu
+    private byte[] mainKey;  //klucz glowny
+    private ArrayList<byte[][]> blocksList;     //lista tablic bajtów tekstu jawnego podszielonego na 16bajtowe bloki
+    private int padding; //ilosc dodanych zer do ostatniego bloku
     //pierwszy wymiar określa liczbę kluczy rundowych; drugi wymiar to tablica bajtów reprezentujących klucz dla danej rundy
-    public byte[][] roundKeys;       //lista kluczy dla każdej rundy na blokach
+    private byte[][] roundKeys;       //lista kluczy dla każdej rundy na blokach
     private static final int[] sbox = { 0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F,
             0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76, 0xCA, 0x82,
             0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C,
@@ -62,7 +64,7 @@ public class Encryptor {
 
         this.keySize = keySize;
         plainBytes = plainText.getBytes(StandardCharsets.UTF_8);
-        //przypisanie klasie ilości rund do wykonania w zależności od dłufości klucza
+        //przypisanie klasie ilości rund do wykonania w zależności od długości klucza
         if (keySize == 128) {
             rounds = 10;
         }
@@ -329,6 +331,24 @@ public class Encryptor {
 
     }
 
+    // zwraca zaszyfrowany tekst w postaci String (razem z padding)
+    public String joinEncryptedText() {
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+            for (byte[][] block : blocksList) {
+                for (int row = 0; row < 4; row++) {
+                    for (int col = 0; col < 4; col++) {
+                        outputStream.write(block[row][col]);
+                    }
+                }
+            }
+
+        byte[] encryptedBytes = outputStream.toByteArray();
+
+        return Base64.getEncoder().withoutPadding().encodeToString(encryptedBytes);
+    }
+
     public byte[][] getRoundKeys() {
         return roundKeys;
     }
@@ -336,4 +356,6 @@ public class Encryptor {
     public ArrayList<byte[][]> getBlocksList() {
         return blocksList;
     }
+
+    public byte[] getMainKey() { return mainKey; }
 }
