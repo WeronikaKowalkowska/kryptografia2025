@@ -120,7 +120,7 @@ public class JavaFxApp extends Application {
 
     private void encryptText() {
         if (textToEncrypt != null && !textToEncrypt.isEmpty()) {
-            NewEncryptor encryptor = new NewEncryptor(textToEncrypt, selectedKey);
+            Encryptor encryptor = new Encryptor(textToEncrypt, selectedKey);
             encryptor.encrypt();
             System.out.println("Zaszyfrowano: " + encryptor.getBlocksList());
         } else {
