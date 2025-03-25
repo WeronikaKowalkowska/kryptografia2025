@@ -1,19 +1,18 @@
 package org.example;
 
-import java.nio.charset.StandardCharsets;
-
 public class Main {
     public static void main(String[] args) {
 
         int keysize = 128;
-        Encryptor encryptor = new Encryptor("Szyfrowanie AES używa bloków 128-bitowych;;;;;;;;lkjhgfdqwertyuiop[;lkjhgfdsazxcvbnm,.;lkjhgfds", keysize);
+        Encryptor encryptor = new Encryptor("Szyfrowanie AES używa bloków 128-bitowych", keysize);
         encryptor.encrypt();
         String text = encryptor.joinEncryptedText();
         System.out.println("Wynik:");
         System.out.println(text);
 
-        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, encryptor.getRoundKeys());
+        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, encryptor.getRoundKeys(), encryptor.getPaddingCount());
         decryptor.decrypt();
+        System.out.println("Wynik:" + decryptor.getDecryptedText());
 
 //        System.out.println("Main key: " + Arrays.toString(encryptor.mainKey));
 //        System.out.println("Words: ");

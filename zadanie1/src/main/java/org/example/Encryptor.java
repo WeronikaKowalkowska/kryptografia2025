@@ -259,7 +259,7 @@ public class Encryptor {
                 if ((b & 0x80) != 0) {  //jeśli MSB było 1 (przekroczenie 8 bitów)
                     result ^= 0x1B;  //redukcja modulo 0x1B
                 }
-                return (byte) result;
+                return (byte) (result & 0xFF);
             case 3:
                 return (byte) (multiplyBy(b, 2) ^ b);
 
@@ -358,4 +358,8 @@ public class Encryptor {
     }
 
     public byte[] getMainKey() { return mainKey; }
+
+    public int getPaddingCount() {
+        return padding;
+    }
 }
