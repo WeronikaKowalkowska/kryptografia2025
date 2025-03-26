@@ -363,4 +363,8 @@ public class Encryptor {
     public int getPaddingCount() {
         return padding;
     }
+
+    public int getKeySize() {
+        return keySize;
+    }
 }

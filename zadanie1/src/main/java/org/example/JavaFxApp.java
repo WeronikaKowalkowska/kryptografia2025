@@ -4,18 +4,17 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextInputDialog;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Optional;
 
 public class JavaFxApp extends Application {
@@ -23,64 +22,140 @@ public class JavaFxApp extends Application {
     //private String textToEncrypt;
     private byte[] textToEncrypt;
     private Stage primaryStage;
+    private byte[] textToDecrypt;
+    private byte [][] roundKeys;
+    private int paddedBytes;
+    private int keySize;
+    private String encryptedText;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         this.primaryStage = primaryStage;
 
-        URL fxmlLocation = getClass().getResource("/org/example/test.fxml");
-        if (fxmlLocation == null) {
-            throw new RuntimeException("Invalid FXML location");
+        // Load the initial FXML for the starting scene
+        URL initialFxmlLocation = getClass().getResource("/org/example/encryption_or_decryption_main.fxml");
+        if (initialFxmlLocation == null) {
+            throw new RuntimeException("Invalid Initial FXML location");
         }
-        FXMLLoader loader = new FXMLLoader(fxmlLocation);
-        Parent root = loader.load();
-        root.setStyle("-fx-background-color: pink;"); // Ustawienie koloru tła
+        FXMLLoader loader = new FXMLLoader(initialFxmlLocation);
+        Parent initialRoot = loader.load();
+        initialRoot.setStyle("-fx-background-color: pink;"); // Ustawienie koloru tła
 
+        Button btnEncryption = (Button) initialRoot.lookup("#btnEncryption");
+        Button btnDecryption = (Button) initialRoot.lookup("#btnDecryption");
 
-        Button btnEncryptFile = (Button) root.lookup("#btnEncryptFile");
-        Button btnEncryptText = (Button) root.lookup("#btnEncryptText");
-        //btnEncryptFile.setStyle("-fx-background-color: #91275e; -fx-text-fill: white;");
-        //btnEncryptText.setStyle("-fx-background-color: #91275e; -fx-text-fill: white;");
-
-        if (btnEncryptFile != null) {
-            btnEncryptFile.setOnAction(event -> {
-                FileChooser fileChooser = new FileChooser();
-                fileChooser.setTitle("Wybierz plik do zaszyfrowania");
-                File file = fileChooser.showOpenDialog(primaryStage);
-                if (file != null) {
-                    try {
-                        textToEncrypt = Files.readAllBytes(Path.of(file.getAbsolutePath()));
-                        System.out.println("Wybrano plik: " + file.getAbsolutePath());
-                        openKeySelectionScene();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
-        } else {
-            System.err.println("Błąd: btnEncryptFile nie znaleziono w FXML!");
+        if (btnEncryption != null) {
+            btnEncryption.setOnAction(event -> openEncryptionScene());
         }
 
-        if (btnEncryptText != null) {
-            btnEncryptText.setOnAction(event -> {
-                TextInputDialog dialog = new TextInputDialog();
-                dialog.setTitle("Wpisz tekst do zaszyfrowania");
-                dialog.setHeaderText("Podaj tekst, który chcesz zaszyfrować:");
-                dialog.setContentText("Tekst:");
-
-                Optional<String> result = dialog.showAndWait();
-                result.ifPresent(text -> {
-                    textToEncrypt = text.getBytes();
-                    openKeySelectionScene();
-                });
-            });
-        } else {
-            System.err.println("Błąd: btnEncryptText nie znaleziono w FXML!");
+        if (btnDecryption != null) {
+            btnDecryption.setOnAction(event -> System.out.println("Decryption not yet implemented."));
         }
 
-        primaryStage.setTitle("Cryptography Application");
-        primaryStage.setScene(new Scene(root, 600, 400));
+        // Set the initial scene
+        primaryStage.setTitle("Choose Operation");
+        primaryStage.setScene(new Scene(initialRoot, 640, 400));
         primaryStage.show();
+    }
+    private void openEncryptionScene(){
+        try {
+            // Load the encryption FXML
+            URL fxmlLocation = getClass().getResource("/org/example/encrypt_file_or_text.fxml");
+            if (fxmlLocation == null) {
+                throw new RuntimeException("Invalid Encryption FXML location");
+            }
+            FXMLLoader loader = new FXMLLoader(fxmlLocation);
+            Parent root = loader.load();
+
+            root.setStyle("-fx-background-color: pink;"); // Ustawienie koloru tła
+
+
+            Button btnEncryptFile = (Button) root.lookup("#btnEncryptFile");
+            Button btnEncryptText = (Button) root.lookup("#btnEncryptText");
+            //btnEncryptFile.setStyle("-fx-background-color: #91275e; -fx-text-fill: white;");
+            //btnEncryptText.setStyle("-fx-background-color: #91275e; -fx-text-fill: white;");
+
+            if (btnEncryptFile != null) {
+                btnEncryptFile.setOnAction(event -> {
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Wybierz plik do zaszyfrowania");
+                    File file = fileChooser.showOpenDialog(primaryStage);
+                    if (file != null) {
+                        try {
+                            textToEncrypt = Files.readAllBytes(Path.of(file.getAbsolutePath()));
+                            System.out.println("Wybrano plik: " + file.getAbsolutePath());
+                            openKeySelectionScene();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } else {
+                System.err.println("Błąd: btnEncryptFile nie znaleziono w FXML!");
+            }
+
+            if (btnEncryptText != null) {
+                btnEncryptText.setOnAction(event -> {
+                    TextInputDialog dialog = new TextInputDialog();
+                    dialog.setTitle("Wpisz tekst do zaszyfrowania");
+                    dialog.setHeaderText("Podaj tekst, który chcesz zaszyfrować:");
+                    dialog.setContentText("Tekst:");
+
+                    Optional<String> result = dialog.showAndWait();
+                    result.ifPresent(text -> {
+                        textToEncrypt = text.getBytes();
+                        openKeySelectionScene();
+                    });
+                });
+            } else {
+                System.err.println("Błąd: btnEncryptText nie znaleziono w FXML!");
+            }
+
+            primaryStage.setScene(new Scene(root, 600, 400));
+            primaryStage.setTitle("Cryptography Application");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private  void openDecryptionScene(){
+        try {
+            // Load the encryption FXML
+            URL fxmlLocation = getClass().getResource("/org/example/decryption_choose_file.fxml");
+            if (fxmlLocation == null) {
+                throw new RuntimeException("Invalid Encryption FXML location");
+            }
+            FXMLLoader loader = new FXMLLoader(fxmlLocation);
+            Parent root = loader.load();
+
+            root.setStyle("-fx-background-color: pink;"); // Ustawienie koloru tła
+
+            Button btnDecryptFile = (Button) root.lookup("#btnDecryption");
+
+            if (btnDecryptFile != null) {
+                btnDecryptFile.setOnAction(event -> {
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Wybierz plik do odszyfrowania");
+                    File file = fileChooser.showOpenDialog(primaryStage);
+                    if (file != null) {
+                        try {
+                            textToDecrypt = Files.readAllBytes(Path.of(file.getAbsolutePath()));
+                            System.out.println("Wybrano plik: " + file.getAbsolutePath());
+
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            } else {
+                System.err.println("Błąd: btnEncryptFile nie znaleziono w FXML!");
+            }
+
+            primaryStage.setScene(new Scene(root, 600, 400));
+            primaryStage.setTitle("Cryptography Application");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void openKeySelectionScene() {
@@ -92,6 +167,7 @@ public class JavaFxApp extends Application {
 
             FXMLLoader loader = new FXMLLoader(keySelectionFxml);
             Parent keyRoot = loader.load();
+            keyRoot.setStyle("-fx-background-color: pink;"); // Ustawienie koloru tła
 
             RadioButton rb128 = (RadioButton) keyRoot.lookup("#rb128");
             RadioButton rb192 = (RadioButton) keyRoot.lookup("#rb192");
@@ -123,14 +199,88 @@ public class JavaFxApp extends Application {
         }
     }
 
-    private void encryptText() {
-        //if (textToEncrypt != null && !textToEncrypt.isEmpty()) {
-            Encryptor encryptor = new Encryptor(textToEncrypt, selectedKey);
-            encryptor.encrypt();
-            System.out.println("Zaszyfrowano: " + encryptor.getBlocksList());
-        //} else {
-           // System.err.println("Błąd: Brak tekstu do zaszyfrowania!");
-       // }
+    public void encryptText() {
+        Encryptor encryptor = new Encryptor(textToEncrypt, selectedKey);
+        encryptor.encrypt();
+        System.out.println("Zaszyfrowano: " + encryptor.getBlocksList());
+        try {
+            URL encryptionSucceededFxml = getClass().getResource("/org/example/encryption_succeded.fxml");
+            if (encryptionSucceededFxml == null) {
+                throw new RuntimeException("Invalid encryption succeeded FXML location");
+            }
+
+            FXMLLoader loader = new FXMLLoader(encryptionSucceededFxml);
+            Parent keyRoot = loader.load();
+            keyRoot.setStyle("-fx-background-color: pink;");
+
+            CheckBox textToFile = (CheckBox) keyRoot.lookup("#textIntoFile");
+            CheckBox textIntoProgram = (CheckBox) keyRoot.lookup("#textIntoProgram");
+            CheckBox keysToFile = (CheckBox) keyRoot.lookup("#keysIntoFile");
+            CheckBox keysToProgram = (CheckBox) keyRoot.lookup("#keysIntoProgram");
+            CheckBox goBack = (CheckBox) keyRoot.lookup("#goBack");
+            Button confirm = (Button) keyRoot.lookup("#confirm");
+
+            confirm.setOnAction(event -> {
+                if (textToFile.isSelected()) {
+                    saveToFile("encrypted_text.txt", encryptor.joinEncryptedText());
+                }
+                if (textIntoProgram.isSelected()) {
+                    this.encryptedText = encryptor.joinEncryptedText();
+                }
+                if (keysToFile.isSelected()) {
+                    saveToFile("keys.txt", Arrays.deepToString(encryptor.getRoundKeys()) + "\nPadding: " + encryptor.getPaddingCount() + "\nKey Size: " + encryptor.getKeySize());
+                }
+                if (keysToProgram.isSelected()) {
+                    this.roundKeys = encryptor.getRoundKeys();
+                    this.paddedBytes = encryptor.getPaddingCount();
+                    this.keySize = encryptor.getKeySize();
+                }
+                if (goBack.isSelected()) {
+                    switchScene(event, "/org/example/encryption_or_decryption_main.fxml");
+                }
+            });
+
+            //Stage stage = (Stage) ((Button) event.getSource()).getScene().getWindow();
+            //stage.setScene(new Scene(keyRoot));
+            //stage.show();
+            primaryStage.setScene(new Scene(keyRoot, 600, 400));
+            primaryStage.setTitle("Encryption Successful");
+            primaryStage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveToFile(String filename, String content) {
+        try (FileWriter writer = new FileWriter(filename)) {
+            writer.write(content);
+            System.out.println("Zapisano do pliku: " + filename);
+        } catch (IOException e) {
+            System.err.println("Błąd zapisu do pliku: " + e.getMessage());
+        }
+    }
+
+    private void switchScene(javafx.event.ActionEvent event, String fxmlPath) {
+        try {
+            URL sceneUrl = getClass().getResource(fxmlPath);
+            if (sceneUrl == null) {
+                throw new RuntimeException("Invalid FXML path: " + fxmlPath);
+            }
+            FXMLLoader loader = new FXMLLoader(sceneUrl);
+            Parent root = loader.load();
+            Stage stage = (Stage) ((Button) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void decryptText() {
+        Decryptor decryptor = new Decryptor(textToDecrypt,keySize, roundKeys,paddedBytes);
+        decryptor.decrypt();
+        System.out.println("Rozszyfrowano: " + decryptor.getDecryptedText());
     }
 
     public static void main(String[] args) {

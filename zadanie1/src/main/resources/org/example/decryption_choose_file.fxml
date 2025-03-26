@@ -85,17 +85,12 @@
     </MenuBar>
     <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS">
       <children>
-        <Label alignment="CENTER" layoutX="224.0" layoutY="113.0" style="&#10;" text="Choose your operation: " textAlignment="CENTER" wrapText="false">
+        <Label alignment="CENTER" layoutX="224.0" layoutY="113.0" style="&#10;" text="Choose file to decrypt:" textAlignment="CENTER" wrapText="false">
           <font>
             <Font size="18.0" />
           </font>
         </Label>
-            <Button layoutX="242.0" layoutY="155.0" mnemonicParsing="false" prefHeight="46.0" prefWidth="155.0" text="Encryption">
-               <font>
-                  <Font size="18.0" />
-               </font>
-            </Button>
-            <Button layoutX="242.0" layoutY="210.0" mnemonicParsing="false" prefHeight="46.0" prefWidth="155.0" text="Decryption">
+            <Button fx:id="btnDecryption" layoutX="237.0" layoutY="164.0" mnemonicParsing="false" prefHeight="46.0" prefWidth="155.0" text="Open Files">
                <font>
                   <Font size="18.0" />
                </font>

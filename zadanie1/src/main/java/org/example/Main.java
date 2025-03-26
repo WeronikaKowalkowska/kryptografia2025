@@ -10,7 +10,7 @@ public class Main {
         System.out.println("Wynik:");
         System.out.println(text);
 
-        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, encryptor.getRoundKeys(), encryptor.getPaddingCount());
+        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText().getBytes(), keysize, encryptor.getRoundKeys(), encryptor.getPaddingCount());
         decryptor.decrypt();
         System.out.println("Wynik:" + decryptor.getDecryptedText());
 

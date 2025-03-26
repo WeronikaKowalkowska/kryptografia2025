@@ -38,11 +38,11 @@ public class Decryptor {
             0x99, 0x61, 0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1,
             0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D };
 
-    public Decryptor(String cipherText, int keySize, byte[][] roundKeys, int paddingCount) {
+    public Decryptor(byte[] cipherText, int keySize, byte[][] roundKeys, int paddingCount) {
 
         this.keySize=keySize;
-        cipherBytes= Base64.getDecoder().decode(cipherText.trim());
-        //przypisanie klasie ilości rund do wykonania w zależności od długości klucza
+        //cipherBytes= Base64.getDecoder().decode(cipherText.trim());
+        ////przypisanie klasie ilości rund do wykonania w zależności od długości klucza
         if (keySize == 128) {
             rounds = 10;
         }
@@ -305,6 +305,10 @@ public class Decryptor {
         byte[] table = removePadding();
 
         return new String(table, java.nio.charset.StandardCharsets.UTF_8);
+    }
+    public byte[] getDecryptedBytes(){
+        byte[] table = removePadding();
+        return table;
     }
 
 
