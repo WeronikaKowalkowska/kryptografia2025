@@ -31,7 +31,9 @@ public class JavaFxApp extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         this.primaryStage = primaryStage;
-
+        reloadMainScene();
+    }
+    public void reloadMainScene() throws IOException {
         // Load the initial FXML for the starting scene
         URL initialFxmlLocation = getClass().getResource("/org/example/encryption_or_decryption_main.fxml");
         if (initialFxmlLocation == null) {
@@ -57,6 +59,7 @@ public class JavaFxApp extends Application {
         primaryStage.setScene(new Scene(initialRoot, 640, 400));
         primaryStage.show();
     }
+
     private void openEncryptionScene(){
         try {
             // Load the encryption FXML
@@ -236,7 +239,11 @@ public class JavaFxApp extends Application {
                     this.keySize = encryptor.getKeySize();
                 }
                 if (goBack.isSelected()) {
-                    switchScene(event, "/org/example/encryption_or_decryption_main.fxml");
+                    try {
+                        reloadMainScene();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             });
 
