@@ -61,17 +61,15 @@ public class Decryptor {
 
         textToByteBlocks();
 
+        System.out.println("Podklucze(odwrócone): " + Arrays.deepToString(this.roundKeys));
+
     }
 
     //zapisuje klucze wykorzystane do szyfrowania w odwrotnej kolejności
     public byte[][] reverseRoundKeys(byte[][] roundKeys) {
         byte[][] temp = new byte[roundKeys.length][];
-        for (int position = 0; position < roundKeys.length; position++) {
-            for (int i = 0; i < roundKeys.length; i++) {
-                for (int j = roundKeys.length - 1; j >= 0; j--) {
-                    temp[i] = roundKeys[j];
-                }
-            }
+        for (int i = 0; i < roundKeys.length; i++) {
+            temp[i] = roundKeys[roundKeys.length - 1 - i];      //odwrócenie kolejności
         }
         return temp;
     }
@@ -113,7 +111,8 @@ public class Decryptor {
         byte[] temp = new byte[4];
         switch (howMuch) {
             case 1:
-                temp=InvertedRotWord(row);
+                byte[] rotated = InvertedRotWord(row);
+                System.arraycopy(rotated, 0, temp, 0, 4);
                 break;
             case 2:
                 temp[0] = row[2];
@@ -144,7 +143,7 @@ public class Decryptor {
                 return b;
             case 2:
                 int result = (b & 0xFF) << 1;
-                if ((b & 0x100) != 0) {     //jeśli najstarszy bit to 1 (przekroczenie 8 bitów)
+                if ((b & 0x80) != 0) {     //jeśli najstarszy bit to 1 (przekroczenie 8 bitów)
                     result ^= 0x1B;         //redukcja przez xor-owanie 0x1B
                 }
                 return (byte) (result & 0xFF);
@@ -164,9 +163,9 @@ public class Decryptor {
             case 13:
                 return (byte) (multiplyBy(multiplyBy((byte) (multiplyBy(b, 2) ^ b), 2), 2) ^ b);
             case 14:
-                return (byte) (multiplyBy((byte) (multiplyBy(multiplyBy(b, 2), 2) ^ b), 2));
+                return (byte) (multiplyBy((byte) (multiplyBy((byte) (multiplyBy(b, 2) ^ b), 2) ^ b), 2));
         }
-        return 0;
+            return 0;
     }
 
 
@@ -267,7 +266,7 @@ public class Decryptor {
     // wynik w postaci String po usunięciu padding
     public String getDecryptedText() {
         byte[] table = removePadding();
-        return new String(table);
+        return new String(table, StandardCharsets.UTF_8);
     }
 
 }

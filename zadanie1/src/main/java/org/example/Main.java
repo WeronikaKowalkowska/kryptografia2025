@@ -1,5 +1,6 @@
 package org.example;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
 
@@ -16,7 +17,7 @@ public class Main {
         Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, encryptor.getRoundKeys(), encryptor.getPaddingCount());
         decryptor.decrypt();
         System.out.println("Wynik:" + decryptor.getDecryptedText());
-
+        System.out.println("Odszyfrowane bajty: " + Arrays.toString(decryptor.getDecryptedText().getBytes(StandardCharsets.UTF_8)));
 
     }
 }

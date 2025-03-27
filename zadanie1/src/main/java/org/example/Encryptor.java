@@ -92,6 +92,8 @@ public class Encryptor {
 //            }
 //            System.out.println();
 //        }
+        System.out.println("Klucz główny: " + Arrays.toString(mainKey));
+        System.out.println("Podklucze: " + Arrays.deepToString(roundKeys));
     }
 
     //generacja klucza głównego
@@ -187,7 +189,8 @@ public class Encryptor {
         byte[] temp = new byte[4];
         switch (howMuch) {
             case 1:
-                temp = RotWord(row);
+                byte[] rotated = RotWord(row);
+                System.arraycopy(rotated, 0, temp, 0, 4);
                 break;
             case 2:
                 temp[0] = row[2];
@@ -259,7 +262,7 @@ public class Encryptor {
                 return b;
             case 2:
                 int result = (b & 0xFF) << 1;
-                if ((b & 0x100) != 0) {         //jeśli najstarszy bit to 1 (przekroczenie 8 bitów)
+                if ((b & 0x80) != 0) {         //jeśli najstarszy bit to 1 (przekroczenie 8 bitów)
                     result ^= 0x1B;             //redukcja przez xor-owanie 0x1B
                 }
                 return (byte) (result & 0xFF);
