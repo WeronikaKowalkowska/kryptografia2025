@@ -2,6 +2,7 @@ package org.example;
 
 import javax.crypto.KeyGenerator;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -10,15 +11,16 @@ import java.util.Arrays;
 import java.util.Base64;
 
 public class Encryptor {
-    private byte[] plainBytes;   //takest jawny zamieniony na bajty
-    private int keySize;     //długość klucza
-    private int rounds;      //ilość rund do wykonania na pojedynczym bloku tekstu
-    private byte[] mainKey;  //klucz glowny
-    private ArrayList<byte[][]> blocksList;     //lista tablic bajtów tekstu jawnego podszielonego na 16bajtowe bloki
-    private int padding; //ilosc dodanych zer do ostatniego bloku
+    private byte[] plainBytes;                  //tekst jawny zamieniony na bajty
+    private int keySize;                        //długość klucza
+    private int rounds;                         //ilość rund do wykonania na pojedynczym bloku tekstu
+    private byte[] mainKey;                     //klucz główny
+    private ArrayList<byte[][]> blocksList;     //lista tablic bajtów tekstu jawnego podzielonego na 16-bajtowe bloki
+    private int padding;                        //ilość dodanych zer do ostatniego bloku
     //pierwszy wymiar określa liczbę kluczy rundowych; drugi wymiar to tablica bajtów reprezentujących klucz dla danej rundy
-    private byte[][] roundKeys;       //lista kluczy dla każdej rundy na blokach
-    private static final int[] sbox = { 0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F,
+    private byte[][] roundKeys;                 //lista kluczy dla każdej rundy na blokach
+
+    private static final int[] sbox = {0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F,
             0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76, 0xCA, 0x82,
             0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C,
             0xA4, 0x72, 0xC0, 0xB7, 0xFD, 0x93, 0x26, 0x36, 0x3F, 0xF7, 0xCC,
@@ -41,9 +43,9 @@ public class Encryptor {
             0x61, 0x35, 0x57, 0xB9, 0x86, 0xC1, 0x1D, 0x9E, 0xE1, 0xF8, 0x98,
             0x11, 0x69, 0xD9, 0x8E, 0x94, 0x9B, 0x1E, 0x87, 0xE9, 0xCE, 0x55,
             0x28, 0xDF, 0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41,
-            0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16 };
+            0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16};
+
     private static final int[] Rcon = {
-            //CZY SKRÓCIĆ??
             0x00000000,
             0x01000000,
             0x02000000,
@@ -55,16 +57,14 @@ public class Encryptor {
             0x80000000,
             0x1B000000,
             0x36000000,
-            0x6C000000,
-            0xD8000000,
-            0xAB000000,
-            0x4D000000
     };
+
     //konstruktor
     public Encryptor(byte[] plainText, int keySize) {
 
         this.keySize = keySize;
         plainBytes = plainText;
+
         //przypisanie klasie ilości rund do wykonania w zależności od długości klucza
         if (keySize == 128) {
             rounds = 10;
@@ -76,159 +76,152 @@ public class Encryptor {
             rounds = 14;
         }
 
-        this.roundKeys = new byte[rounds + 1][];
+        this.roundKeys = new byte[rounds + 1][];    //rozmiar jest o jeden więcej, ponieważ generujemy na jeden podklucz więcej niż ilość rund
         this.blocksList = new ArrayList<>();
 
-        mainKeyGenerate();      //generacja klucza głównego
-        keyExpansion();      //keyExpansion - kazdy blok używa tych samych kluczy rund
-        textToByteBlocks(); //podział teksu jawnego w postaci bajtów na bloki
+        mainKeyGenerate();     //generacja klucza głównego
+        keyExpansion();        //generowanie podkluczy dla wszystkich rund
+        textToByteBlocks();    //podział teksu jawnego w postaci bajtów na bloki
 
         //!!!debugowanie!!!
-        System.out.println("Main Key: " + mainKey);
-        for (int i = 0; i <rounds; i++) {
-            byte[] table = roundKeys[i];
-            for (byte b : table) {
-                System.out.print(b + " ");
-            }
-            System.out.println();
-        }
+//        System.out.println("Main Key: " + mainKey);
+//        for (int i = 0; i <rounds; i++) {
+//            byte[] table = roundKeys[i];
+//            for (byte b : table) {
+//                System.out.print(b + " ");
+//            }
+//            System.out.println();
+//        }
     }
 
     //generacja klucza głównego
     public void mainKeyGenerate() {
-        KeyGenerator gen = null;
         try {
-            gen = KeyGenerator.getInstance("AES");
+            KeyGenerator gen = KeyGenerator.getInstance("AES");
             gen.init(keySize);
             mainKey = gen.generateKey().getEncoded();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Błąd podczas generowania klucza głównego AES", e);
         }
     }
 
-    public void keyExpansion() {
-        //podział klucza głównego na słowa
-        byte[][] mainKeyWords = separateWords(mainKey);
+    //podział klucza na słowa
+    public byte[][] separateWords(byte[] key) {
+        int howManyWordsInKey = keySize / 32;                 //dzielimy przez 32, ponieważ rozmiar jest w bitach, a słowo to 4 bajty = 8x4 = 32
+        byte[][] keyWords = new byte[howManyWordsInKey][];    //pierwszy wymiar to numer słowa w kluczu, a drugi to 4 bajty reprezentujące to słowo
 
-        for(int i=0;i<=rounds;i++) {
+        for (int i = 0; i < howManyWordsInKey; i++) {         //iteruje po numerze słowa
+            byte[] word = new byte[4];                        //tworzy pojedyncze słowo
+            for (int j = 0; j < 4; j++) {                     //iteruje po bajtach w słowie
+                word[j] = key[i * 4 + j];                     //zapisuje bajty z klucza do słowa
+            }
+            keyWords[i] = word;                               //zapisuje "wycięte" słowo z klucza do tablicy słow
+        }
+
+        return keyWords;
+    }
+
+    //generacja podkluczy
+    public void keyExpansion() {
+
+        byte[][] mainKeyWords = separateWords(mainKey);      //podział klucza głównego na słowa
+
+        for (int i = 0; i <= rounds; i++) {
             byte[] newKey = generateKey(i, mainKeyWords);
             roundKeys[i] = newKey;
         }
     }
 
-    public byte[][] separateWords(byte[] key) {
-        int howManyWordsInKey=keySize/32;
-        byte[][] KeyWords = new byte[howManyWordsInKey][];    //[ile słów dla danej dlugosci klucza (w1-w4)][4 bajty reprezentujace pojedyncze slowo] - nr slowa/to slowo
-        for (int i = 0; i < howManyWordsInKey; i++) {
-            //iteruje po numerze słowa
-            byte[] word = new byte[4]; //tworzy pojedyncze slowo
-            for (int j = 0; j < 4; j ++) {
-                //iteruje po bajtach w słowie
-                word[j] = key[i*4+j]; //zapisuje bajty z klucza do słowa
-            }
-            KeyWords[i] = word; //zapisuje wyciete slowo z klucza
-        }
-        return KeyWords;
-    }
-
-    //generuje pojedynczy klucz dla numeru rundy przekazanego jako parament
+    //generuje pojedynczy podklucz dla numeru rundy przekazanego jako parament
     public byte[] generateKey(int round, byte[][] mainKeyWords) {
-        byte[] key = new byte[keySize / 8];   //zwracany podklucz, rozmiar=(keysize/8)=liczba bajtów
+        byte[] key = new byte[keySize / 8];                  //zwracany podklucz; rozmiar wynosi keysize/8, ponieważ to jest liczba bajtów w kluczu
         byte[] rcon = intToByteTable(Rcon[round]);
+        byte[][] keyForGeneration;                         //klucz używany jako podstawa do generacji
 
-        byte[][] keyForGeneration;
-        if (round == 0) {
+        if (round == 0) {                                  //pierwszy podklucz jest liczony na bazie klucza głównego
             keyForGeneration = mainKeyWords;
         } else {
-            keyForGeneration = separateWords(roundKeys[round-1]);
+            keyForGeneration = separateWords(roundKeys[round - 1]);  //w przeciwnym wypadku to jest poprzedni wygenerowany podklucz
         }
 
-        byte[] temp = SubWord(RotWord(keyForGeneration[keyForGeneration.length-1])); //wyrazenie dla slowa pierwszego słowa w podkluczu
+        byte[] temp = SubWord(RotWord(keyForGeneration[keyForGeneration.length - 1])); //wyrażenie pomocnicze dla pierwszego słowa w podkluczu
 
         for (int i = 0; i < 4; i++) {
-            temp[i] ^= rcon[i]; //xorowanie sub words z rcon
+            temp[i] ^= rcon[i];             //xor-owanie sub words z R-con
         }
 
         //pierwsze słowo klucza
-        //xorowanie pierwszego slowa z klucza glownego z wyliczonym wyrazeniem
-        for (int i = 0 ; i < 4; i++) {
-            key[i] = (byte) (keyForGeneration[0][i] ^ temp[i]);
+        for (int i = 0; i < 4; i++) {
+            key[i] = (byte) (keyForGeneration[0][i] ^ temp[i]); //xor-owanie pierwszego słowa z klucza do generacji z wyliczonym wyrazeniem
         }
 
-        //licznik miejsca w kluczu (4 poprzednie już są dodane)
-        int positionInKey = 4;
+        int positionInKey = 4;       //licznik miejsca w kluczu (4, ponieważ poprzednie słowo jest już dodane)
 
-        for (int i=1;i<keyForGeneration.length;i++)
-        {
-            //iteruje po słowach
-            for (int j = 0; j < 4; j++) {
-                key[positionInKey + j] = (byte) (key[positionInKey + j - 4] ^ keyForGeneration[i][j]);  //xorowanie pozostalych slow
+        for (int i = 1; i < keyForGeneration.length; i++) {
+            for (int j = 0; j < 4; j++) {   //iteruje po słowach
+                key[positionInKey + j] = (byte) (key[positionInKey + j - 4] ^ keyForGeneration[i][j]);  //xor-owanie pozostałych słów
             }
-            positionInKey+=4;
+            positionInKey += 4;
         }
 
         return key;
     }
 
-    //zamień int na tablicę bajtów
+    //zamiana int-a na tablicę bajtów
     public byte[] intToByteTable(int input) {
-        byte[] output = new byte[4];
-        output[0] = (byte) (input >>> 24);
-        output[1] = (byte) (input >>> 16);
-        output[2] = (byte) (input >>> 8);
-        output[3] = (byte) (input);
-        return output;
+        return ByteBuffer.allocate(4).putInt(input).array();
     }
 
-    //przesunięcie w lewo bajtow w slowie
+    //przesunięcie w lewo bajtów w słowie
     public byte[] RotWord(byte[] word) {
         byte[] rotWord = new byte[4];
         rotWord[3] = word[0];
         for (int i = 0; i < 3; i++) {
-            rotWord[i] = word[i+1]; //zmien kolejnosc
+            rotWord[i] = word[i + 1];         //przesunięcie
         }
         return rotWord;
     }
 
+    //przesunięcie wierszy w bloku, jako paramenty podajemy wiersz i o ile trzeba przesunąć wartości
     public byte[] ShiftRow(byte[] row, int howMuch) {
         byte[] temp = new byte[4];
         switch (howMuch) {
             case 1:
-                temp=RotWord(row);
+                temp = RotWord(row);
                 break;
             case 2:
-                temp[0]=row[2];
-                temp[1]=row[3];
-                temp[2]=row[0];
-                temp[3]=row[1];
+                temp[0] = row[2];
+                temp[1] = row[3];
+                temp[2] = row[0];
+                temp[3] = row[1];
                 break;
             case 3:
-                temp[0]=row[3];
-                temp[1]=row[0];
-                temp[2]=row[1];
-                temp[3]=row[2];
+                temp[0] = row[3];
+                temp[1] = row[0];
+                temp[2] = row[1];
+                temp[3] = row[2];
                 break;
         }
         return temp;
     }
 
+    //zamiana pojedynczego bajta na wartość z S-boxa
     public byte SubByte(byte input) {
-        int index = input & 0xFF;   //mapuje na zakres 0-255
-        return (byte) sbox[index];  //podmien na odpowiedni bajt
+        int index = input & 0xFF;       //mapuje wartość na zakres 0-255
+        return (byte) sbox[index];      //podmiana na odpowiedni bajt w S-boxie
     }
 
-    //zamienia slowo na wartosci z subbox
+    //zamiana słowa na wartości z S-boxa
     public byte[] SubWord(byte[] input) {
-        byte[] output = new byte[4]; //nowe slowo z wartosciami z sub boxa. ma 4 bajty
+        byte[] output = new byte[4];        //nowe słowo z wartościami z S-boxa
         for (int i = 0; i < 4; i++) {
-            output[i] = (byte) SubByte(input[i]); //zamieniam kazdy bajt
+            output[i] = SubByte(input[i]);  //zamienia każdy bit
         }
         return output;
     }
 
-    //wykonuje operacje dla danego bloku i danej rundy
+    //wykonanie operacji xor-owania dla danego bloku i danej rundy
     public void addRoundKey(byte[][] block, int round) {
-        //cały blok jest XORowany z  wygenerowanym podkluczem.
         for (int row = 0; row < 4; row++) {
             for (int col = 0; col < 4; col++) {
                 block[row][col] ^= roundKeys[round][row * 4 + col];
@@ -237,38 +230,37 @@ public class Encryptor {
     }
 
     //podział na dwuwymiarowe bloki
-    public void textToByteBlocks(){
-        int length = plainBytes.length;
+    public void textToByteBlocks() {
+        int length = plainBytes.length;          //długość tekstu jawnego zamienionego na bajty
 
-        //sprawdzenie i uzupełnienie zerami jeśli tekst nie jest wielokrotnościa 16 bajtów
-        if (length % 16 != 0) {
-            this.padding = 16 - (length % 16);  //liczba dodanych bajtów
-            byte[] paddedBytes = Arrays.copyOf(plainBytes, length + this.padding);
-            this.plainBytes = paddedBytes;
+        if (length % 16 != 0) {                  //sprawdzenie i uzupełnienie zerami, jeżeli tekst nie jest wielokrotnością 16 bajtów
+            this.padding = 16 - (length % 16);   //liczba dodanych bajtów zapisywana do zmiennej
+            this.plainBytes = Arrays.copyOf(plainBytes, length + this.padding);
         }
 
-        //podzial tekstu na bloki
-        for (int i = 0; i < plainBytes.length; i += 16) {
+        //podział tekstu na bloki
+        for (int i = 0; i < length; i += 16) {      //iteracja po blokach teksu
             byte[][] block = new byte[4][4];
-
             for (int row = 0; row < 4; row++) {
                 for (int col = 0; col < 4; col++) {
                     block[row][col] = plainBytes[i + (col * 4) + row];
                 }
             }
 
-            blocksList.add(block);
+            blocksList.add(block);      //dodanie nowo stworzonego bloku do listy bloków
         }
+
     }
 
+    //mnożenie pola Galois (dla mnożenia razy 1, 2 i 3)
     public byte multiplyBy(byte b, int howMuch) {
         switch (howMuch) {
             case 1:
                 return b;
             case 2:
                 int result = (b & 0xFF) << 1;
-                if ((b & 0x100) != 0) {  //jeśli MSB było 1 (przekroczenie 8 bitów)
-                    result ^= 0x1B;  //redukcja modulo 0x1B
+                if ((b & 0x100) != 0) {         //jeśli najstarszy bit to 1 (przekroczenie 8 bitów)
+                    result ^= 0x1B;             //redukcja przez xor-owanie 0x1B
                 }
                 return (byte) (result & 0xFF);
             case 3:
@@ -278,91 +270,96 @@ public class Encryptor {
         return 0;
     }
 
-    //wykonanie pierwszego addround key i zapetlenie
-    public void encrypt(){
-        for (int blockCount = 0; blockCount < blocksList.size(); blockCount++) { //dla każdego bloku wykonaj rundy
-            //pierwsza runda - add round key i xor bloku z pierwszym podkluczem
+    //wykonanie pierwszego addRoundKey i kolejnych rund
+    public void encrypt() {
+        for (int blockCount = 0; blockCount < blocksList.size(); blockCount++) {    //dla każdego bloku wykonaj rundy
             byte[][] block = blocksList.get(blockCount);    //zmienna przechowująca bierzący blok, dla którego wykonujemy szyfrowanie
-            addRoundKey(block,0);
-            //pozostałe rundy
-            for(int round=1;round<=rounds;round++){
-                byte[][] blockTemp = new byte[4][4]; //zmienna tymczasowa, która przechowuje zmiany na bierzącym bloku
+
+            //AddRoundKey początkowe
+            addRoundKey(block, 0);                     //addRoundKey z pierwszym podkluczem (zerowy podklucz w tabeli podkluczy)
+
+            for (int round = 1; round <= rounds; round++) {  //pozostałe rundy (zaczynamy od jedynki, ponieważ zerowy podklucz został już użyty)
+                byte[][] blockTemp = new byte[4][4];        //zmienna tymczasowa, która przechowuje zmiany na bierzącym bloku
                 for (int row = 0; row < 4; row++) {
-                    blockTemp[row] = blocksList.get(blockCount)[row].clone();
+                    blockTemp[row] = blocksList.get(blockCount)[row].clone();  //pobieramy kopię bloku, którą będziemy zmieniać
                 }
-                for(int row=0;row<4;row++){
-                    for(int col=0;col<4;col++){
-                        blockTemp[row][col]=SubByte(blockTemp[row][col]);   //sub bytes
+
+                //SubBytes - każdy bajt bloku jest zamieniany na inny z S-boxa
+                for (int row = 0; row < 4; row++) {
+                    for (int col = 0; col < 4; col++) {
+                        blockTemp[row][col] = SubByte(blockTemp[row][col]);
                     }
                 }
 
-                for(int row=0;row<4;row++){
-                    byte[] blockRow=new byte[4];
-                    for(int col=0;col<4;col++){
-                        blockRow[col]=blockTemp[row][col];
+                //ShiftRows - rotacja wierszy
+                for (int row = 0; row < 4; row++) {
+                    byte[] blockRow = new byte[4];
+                    for (int col = 0; col < 4; col++) {
+                        blockRow[col] = blockTemp[row][col];    //zapisywanie pojedynczego wiersza do zmiennej
                     }
-                    if(row!=0){
-                        byte[] shiftedRow = ShiftRow(blockRow, row);
-                        for(int col=0;col<4;col++){
-                            blockTemp[row][col]=shiftedRow[col];  //shift rows
+
+                    if (row != 0) {                                      //pierwszy wiersz jest bez zmian
+                        byte[] shiftedRow = ShiftRow(blockRow, row);     //przesuwanie
+                        for (int col = 0; col < 4; col++) {
+                            blockTemp[row][col] = shiftedRow[col];      //zapisywanie zmienionego wiersza do bloku
                         }
                     }
                 }
 
-                //mix columns
-                if(round!=rounds){
-                    for(int col=0;col<4;col++){
-                        byte[] blockCol=new byte[4];
-                        for(int row=0;row<4;row++){
-                            blockCol[row]=blockTemp[row][col];
+                //MixColumns
+                if (round != rounds) {                    //operacja nie jest wykonywana dla ostatniej rundy
+                    for (int col = 0; col < 4; col++) {
+                        byte[] blockCol = new byte[4];
+                        for (int row = 0; row < 4; row++) {
+                            blockCol[row] = blockTemp[row][col];    //zapisywanie pojedynczej kolumny do zmiennej
                         }
+
                         byte b0 = (byte) (multiplyBy(blockCol[0], 2) ^ multiplyBy(blockCol[1], 3) ^ multiplyBy(blockCol[2], 1) ^ multiplyBy(blockCol[3], 1));
                         byte b1 = (byte) (multiplyBy(blockCol[0], 1) ^ multiplyBy(blockCol[1], 2) ^ multiplyBy(blockCol[2], 3) ^ multiplyBy(blockCol[3], 1));
                         byte b2 = (byte) (multiplyBy(blockCol[0], 1) ^ multiplyBy(blockCol[1], 1) ^ multiplyBy(blockCol[2], 2) ^ multiplyBy(blockCol[3], 3));
                         byte b3 = (byte) (multiplyBy(blockCol[0], 3) ^ multiplyBy(blockCol[1], 1) ^ multiplyBy(blockCol[2], 1) ^ multiplyBy(blockCol[3], 2));
 
-                        blockCol[0]=b0;
-                        blockCol[1]=b1;
-                        blockCol[2]=b2;
-                        blockCol[3]=b3;
+                        blockCol[0] = b0;
+                        blockCol[1] = b1;
+                        blockCol[2] = b2;
+                        blockCol[3] = b3;
 
-                        for(int row=0;row<4;row++){
-                            blockTemp[row][col]=blockCol[row];
+                        for (int row = 0; row < 4; row++) {
+                            blockTemp[row][col] = blockCol[row];         //zapisywanie zmienionej kolumny do bloku
                         }
 
                     }
                 }
 
-                addRoundKey(blockTemp, round);    //add round key na koniec
-                //blocksList.set(blockCount,blockTemp); //podmiana bloku na zmieniony po operacjach
-                byte[][] newBlock = new byte[4][4];
-                for (int i = 0; i < 4; i++) {
-                    System.arraycopy(blockTemp[i], 0, newBlock[i], 0, 4);
+                //AddRoundKey dla bierzącej rundy
+                addRoundKey(blockTemp, round);
+
+                byte[][] newBlock = new byte[4][4];     //tworzymy nową tablicę
+                for (int row = 0; row < 4; row++) {
+                    newBlock[row] = Arrays.copyOf(blockTemp[row], 4);  //kopiujemy zawartość blockTemp, ponieważ nie chcemy dopuścić przekazywanie referencji
                 }
-                blocksList.set(blockCount, newBlock);
+
+                blocksList.set(blockCount, newBlock);   //dodajemy bezpieczną kopię tablicy
             }
         }
 
-        //!!!debugowanie!!!
-        for (int i=0; i<blocksList.size(); i++){
-            System.out.println(Arrays.deepToString(blocksList.get(i)));
-        }
+//        //!!!debugowanie!!!
+//        for (int i = 0; i < blocksList.size(); i++) {
+//            System.out.println(Arrays.deepToString(blocksList.get(i)));
+//        }
 
     }
 
-    // zwraca zaszyfrowany tekst w postaci tablicy bajtów (razem z padding)
+    //zwraca zaszyfrowany tekst w postaci tablicy bajtów (razem z padding)
     public byte[] joinEncryptedText() {
-
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-            for (byte[][] block : blocksList) {
-                for (int row = 0; row < 4; row++) {
-                    for (int col = 0; col < 4; col++) {
-                        outputStream.write(block[row][col]);
-                    }
+        for (byte[][] block : blocksList) {     //dla wszystkich bloków tekstu
+            for (int row = 0; row < 4; row++) {
+                for (int col = 0; col < 4; col++) {
+                    outputStream.write(block[row][col]);
                 }
             }
-
+        }
         return outputStream.toByteArray();
     }
 
@@ -374,13 +371,9 @@ public class Encryptor {
         return blocksList;
     }
 
-    public byte[] getMainKey() { return mainKey; }
-
     public int getPaddingCount() {
         return padding;
     }
 
-    public int getKeySize() {
-        return keySize;
-    }
+    public int getKeySize() { return keySize; }
 }
