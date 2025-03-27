@@ -4,6 +4,7 @@ import javax.crypto.KeyGenerator;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -79,8 +80,7 @@ public class Encryptor {
         this.blocksList = new ArrayList<>();
 
         mainKeyGenerate();      //generacja klucza głównego
-        //keyExpansion - kazdy blok używa tych samych kluczy rund
-        keyExpansion();
+        keyExpansion();      //keyExpansion - kazdy blok używa tych samych kluczy rund
         textToByteBlocks(); //podział teksu jawnego w postaci bajtów na bloki
 
         //!!!debugowanie!!!
@@ -111,8 +111,7 @@ public class Encryptor {
         byte[][] mainKeyWords = separateWords(mainKey);
 
         for(int i=0;i<=rounds;i++) {
-            byte[] newKey = new byte[128];
-            newKey = generateKey(i, mainKeyWords);
+            byte[] newKey = generateKey(i, mainKeyWords);
             roundKeys[i] = newKey;
         }
     }
@@ -132,20 +131,19 @@ public class Encryptor {
         return KeyWords;
     }
 
-    //gemeruje pojedynczy klucz dla numeru rundy przedazanego jako parament
+    //generuje pojedynczy klucz dla numeru rundy przekazanego jako parament
     public byte[] generateKey(int round, byte[][] mainKeyWords) {
-        byte[] temp = new byte[4]; //wyrazenie dla dla slowa pierwszego słowa w podlluczu
-        byte[] key = new byte[128];   //zwracany podklucz, rozmiar=(keysize/8)=liczba bajtów
+        byte[] key = new byte[keySize / 8];   //zwracany podklucz, rozmiar=(keysize/8)=liczba bajtów
         byte[] rcon = intToByteTable(Rcon[round]);
 
-        byte[][] keyForGeneration = new byte[keySize/32][];
+        byte[][] keyForGeneration;
         if (round == 0) {
             keyForGeneration = mainKeyWords;
         } else {
             keyForGeneration = separateWords(roundKeys[round-1]);
         }
 
-        temp = SubWord(RotWord(keyForGeneration[keyForGeneration.length-1]));
+        byte[] temp = SubWord(RotWord(keyForGeneration[keyForGeneration.length-1])); //wyrazenie dla slowa pierwszego słowa w podkluczu
 
         for (int i = 0; i < 4; i++) {
             temp[i] ^= rcon[i]; //xorowanie sub words z rcon
@@ -269,7 +267,7 @@ public class Encryptor {
                 return b;
             case 2:
                 int result = (b & 0xFF) << 1;
-                if ((b & 0x80) != 0) {  //jeśli MSB było 1 (przekroczenie 8 bitów)
+                if ((b & 0x100) != 0) {  //jeśli MSB było 1 (przekroczenie 8 bitów)
                     result ^= 0x1B;  //redukcja modulo 0x1B
                 }
                 return (byte) (result & 0xFF);
@@ -288,7 +286,10 @@ public class Encryptor {
             addRoundKey(block,0);
             //pozostałe rundy
             for(int round=1;round<=rounds;round++){
-                byte[][] blockTemp = blocksList.get(blockCount);    //zmienna tymczasowa, która przechowuje zmiany na bierzącym bloku
+                byte[][] blockTemp = new byte[4][4]; //zmienna tymczasowa, która przechowuje zmiany na bierzącym bloku
+                for (int row = 0; row < 4; row++) {
+                    blockTemp[row] = blocksList.get(blockCount)[row].clone();
+                }
                 for(int row=0;row<4;row++){
                     for(int col=0;col<4;col++){
                         blockTemp[row][col]=SubByte(blockTemp[row][col]);   //sub bytes

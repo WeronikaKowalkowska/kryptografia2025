@@ -223,7 +223,10 @@ public class Decryptor {
             byte[][] block = cipherBlocksList.get(blockCount);    //zmienna przechowująca bierzący blok, dla którego wykonujemy deszyfrowanie
             addRoundKey(block,0); //zaczynamy deszyfrowanie od ostatniego klucza (odwrotna kolejność)
             for(int round=1;round<=rounds;round++){
-                byte[][] blockTemp = cipherBlocksList.get(blockCount); //zmienna tymczasowa, która przechowuje zmiany na bierzącym bloku
+                byte[][] blockTemp = new byte[4][4]; //zmienna tymczasowa, która przechowuje zmiany na bierzącym bloku
+                for (int row = 0; row < 4; row++) {
+                    blockTemp[row] = cipherBlocksList.get(blockCount)[row].clone();
+                }
                 for(int row=0;row<4;row++){
                     byte[] blockRow=new byte[4];
                     for(int col=0;col<4;col++){
