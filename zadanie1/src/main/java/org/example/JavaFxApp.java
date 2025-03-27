@@ -28,6 +28,10 @@ public class JavaFxApp extends Application {
     private int paddedBytes;
     private int keySize;
     private String encryptedText;
+    private int keySizeDecryption;
+    private int paddedBytesDecryption;
+    private byte  [][] roundKeysDecryption;;
+
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -125,19 +129,72 @@ public class JavaFxApp extends Application {
     private  void openDecryptionScene(){
         try {
             // Load the encryption FXML
-            URL fxmlLocation = getClass().getResource("/org/example/decryption_choose_file.fxml");
+            URL fxmlLocation = getClass().getResource("/org/example/decryption_choose_type.fxml");
             if (fxmlLocation == null) {
                 throw new RuntimeException("Invalid Encryption FXML location");
             }
             FXMLLoader loader = new FXMLLoader(fxmlLocation);
             Parent root = loader.load();
-
             root.setStyle("-fx-background-color: pink;"); // Ustawienie koloru tła
 
-            Button btnDecryptFile = (Button) root.lookup("#btnDecryption");
+            RadioButton fileInput = (RadioButton) root.lookup("#fileInput");
+            RadioButton textInput = (RadioButton) root.lookup("#textInput");
+            RadioButton keysFromMemmory = (RadioButton) root.lookup("#keysFromMemmory");
+            RadioButton keysFromFile = (RadioButton) root.lookup("#keysFromFile");
+            RadioButton keysFromText = (RadioButton) root.lookup("#keysFromText");
+            RadioButton key128 = (RadioButton) root.lookup("#key128");
+            RadioButton key192 = (RadioButton) root.lookup("#key192");
+            RadioButton key256 = (RadioButton) root.lookup("#key256");
+            Button confirm = (Button) root.lookup("#confirm");
+            TextArea mainKeyInput = (TextArea) root.lookup("#mainKeyInputmainKeyInput");
+            TextArea paddingTextInput = (TextArea) root.lookup("#paddingTextInput");
+            if(keysFromText != null) {
+                if(key128!=null){
+                    keySizeDecryption=128;
+                }
+                if(key192!=null){
+                    keySizeDecryption=192;
+                }
+                if(key256!=null){
+                    keySizeDecryption=256;
+                }
+                if(mainKeyInput!=null){
+                    Encryptor encryptor=new Encryptor(null,keySizeDecryption);
+                    roundKeysDecryption= encryptor.getRoundKeys();
+                }
+                if(paddingTextInput!=null){
+                    paddedBytesDecryption= Integer.parseInt(paddingTextInput.getText());
+                }
+            }
+           if(keysFromMemmory!=null){
+                //if(keySize!=null){
+                    keySizeDecryption=keySize;
+                    paddedBytesDecryption=paddedBytes;
+                    roundKeysDecryption=roundKeys;
+                //}
+                //else{
+                 //   System.err.println("nie dokonano wcześniej enkrypcji, key size jest null");
+               // }
 
-            if (btnDecryptFile != null) {
-                btnDecryptFile.setOnAction(event -> {
+            }
+            if(keysFromFile!=null){
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Wybierz plik w którym zawarto klucze, padding i rozmiar klucza: ");
+                File file = fileChooser.showOpenDialog(primaryStage);
+                if (file != null) {
+                    try {
+                        textToDecrypt = Files.readAllBytes(Path.of(file.getAbsolutePath()));
+                        System.out.println("Wybrano plik: " + file.getAbsolutePath());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                //file.rea
+                        //TU UZYJ SCANNERA?
+            }
+
+            if (fileInput != null) {
+                fileInput.setOnAction(event -> {
                     FileChooser fileChooser = new FileChooser();
                     fileChooser.setTitle("Wybierz plik do odszyfrowania");
                     File file = fileChooser.showOpenDialog(primaryStage);
@@ -145,15 +202,36 @@ public class JavaFxApp extends Application {
                         try {
                             textToDecrypt = Files.readAllBytes(Path.of(file.getAbsolutePath()));
                             System.out.println("Wybrano plik: " + file.getAbsolutePath());
-
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
                     }
                 });
             } else {
-                System.err.println("Błąd: btnEncryptFile nie znaleziono w FXML!");
+                System.err.println("Błąd: fileInput nie znaleziono w FXML!");
             }
+
+            if (textInput != null) {
+                confirm.setOnAction(event -> {
+                    TextInputDialog dialog = new TextInputDialog();
+                    dialog.setTitle("Wpisz tekst do odszyfrowania");
+                    dialog.setHeaderText("Podaj tekst, który chcesz zaszyfrować:");
+                    dialog.setContentText("Tekst:");
+
+                    Optional<String> result = dialog.showAndWait();
+                    result.ifPresent(text -> {
+                        textToDecrypt = text.getBytes();
+                        openKeySelectionScene();
+                    });
+                });
+            }
+            else {
+                confirm.setOnAction(event -> {
+
+                });
+
+            }
+
 
             primaryStage.setScene(new Scene(root, 600, 400));
             primaryStage.setTitle("Cryptography Application");

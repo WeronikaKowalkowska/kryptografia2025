@@ -99,35 +99,35 @@
                   <Font size="18.0" />
                </font>
             </Label>
-            <RadioButton layoutX="289.0" layoutY="49.0" mnemonicParsing="false" text="App memory (last written encryption) ">
+            <RadioButton fx:id="keysFromMemmory" layoutX="289.0" layoutY="49.0" mnemonicParsing="false" text="App memory (last written encryption) ">
                <font>
                   <Font size="18.0" />
                </font>
             </RadioButton>
-            <RadioButton layoutX="289.0" layoutY="81.0" mnemonicParsing="false" text="text file ">
+            <RadioButton fx:id="keysFromFile" layoutX="289.0" layoutY="81.0" mnemonicParsing="false" text="text file ">
                <font>
                   <Font size="18.0" />
                </font>
             </RadioButton>
-            <RadioButton layoutX="290.0" layoutY="114.0" mnemonicParsing="false" text="Direct input: ">
+            <RadioButton fx:id="keysFromText" layoutX="290.0" layoutY="114.0" mnemonicParsing="false" text="Direct input: ">
                <font>
                   <Font size="18.0" />
                </font>
             </RadioButton>
-            <TextArea layoutX="437.0" layoutY="139.0" prefHeight="10.0" prefWidth="155.0" />
-            <RadioButton layoutX="35.0" layoutY="49.0" mnemonicParsing="false" text="File ">
+            <TextArea fx:id="roundKeysTextInput" layoutX="437.0" layoutY="139.0" prefHeight="10.0" prefWidth="155.0" />
+            <RadioButton fx:id="fileInput" layoutX="35.0" layoutY="49.0" mnemonicParsing="false" text="File ">
                <font>
                   <Font size="18.0" />
                </font>
             </RadioButton>
-            <RadioButton layoutX="35.0" layoutY="95.0" mnemonicParsing="false" text="Plain text:">
+            <RadioButton fx:id="textInput" layoutX="35.0" layoutY="95.0" mnemonicParsing="false" text="Plain text:">
                <font>
                   <Font size="18.0" />
                </font>
             </RadioButton>
-            <TextArea layoutX="437.0" layoutY="187.0" prefHeight="40.0" prefWidth="155.0" />
+            <TextArea fx:id="paddingTextInput" layoutX="437.0" layoutY="187.0" prefHeight="40.0" prefWidth="155.0" />
             <TextField layoutX="35.0" layoutY="128.0" prefHeight="39.0" prefWidth="149.0" />
-            <Text layoutX="337.0" layoutY="153.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Round Keys: ">
+            <Text layoutX="337.0" layoutY="153.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Main Key: ">
                <font>
                   <Font size="14.0" />
                </font>
@@ -137,27 +137,27 @@
                   <Font size="14.0" />
                </font>
             </Text>
-            <Text layoutX="341.0" layoutY="251.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Key Length:">
+            <Text layoutX="341.0" layoutY="250.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Key Length:">
                <font>
                   <Font size="14.0" />
                </font>
             </Text>
-            <RadioButton layoutX="437.0" layoutY="245.0" mnemonicParsing="false" text="128">
+            <RadioButton fx:id="key128" layoutX="437.0" layoutY="245.0" mnemonicParsing="false" text="128">
                <font>
                   <Font size="14.0" />
                </font>
             </RadioButton>
-            <RadioButton layoutX="437.0" layoutY="278.0" mnemonicParsing="false" text="192">
+            <RadioButton fx:id="key192" layoutX="437.0" layoutY="278.0" mnemonicParsing="false" text="192">
                <font>
                   <Font size="14.0" />
                </font>
             </RadioButton>
-            <RadioButton layoutX="437.0" layoutY="308.0" mnemonicParsing="false" text="256">
+            <RadioButton fx:id="key256" layoutX="437.0" layoutY="308.0" mnemonicParsing="false" text="256">
                <font>
                   <Font size="14.0" />
                </font>
             </RadioButton>
-            <Button layoutX="255.0" layoutY="318.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="109.0" text="Confirm">
+            <Button fx:id="confirm" layoutX="255.0" layoutY="318.0" mnemonicParsing="false" prefHeight="40.0" prefWidth="109.0" text="Confirm">
                <font>
                   <Font size="18.0" />
                </font>
