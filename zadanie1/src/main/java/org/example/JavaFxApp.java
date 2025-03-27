@@ -15,6 +15,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Optional;
 
 public class JavaFxApp extends Application {
@@ -225,10 +226,10 @@ public class JavaFxApp extends Application {
 
             confirm.setOnAction(event -> {
                 if (textToFile.isSelected()) {
-                    saveToFile("encrypted_text.txt", encryptor.joinEncryptedText());
+                    saveToFile("encrypted_text.txt", Base64.getEncoder().withoutPadding().encodeToString(encryptor.joinEncryptedText()));
                 }
                 if (textIntoProgram.isSelected()) {
-                    this.encryptedText = encryptor.joinEncryptedText();
+                    this.encryptedText = Base64.getEncoder().withoutPadding().encodeToString(encryptor.joinEncryptedText());
                 }
                 if (keysToFile.isSelected()) {
                     saveToFile("keys.txt", Arrays.deepToString(encryptor.getRoundKeys()) + "\nPadding: " + encryptor.getPaddingCount() + "\nKey Size: " + encryptor.getKeySize());

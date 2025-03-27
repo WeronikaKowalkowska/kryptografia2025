@@ -41,8 +41,8 @@ public class Decryptor {
     public Decryptor(byte[] cipherText, int keySize, byte[][] roundKeys, int paddingCount) {
 
         this.keySize=keySize;
-        //cipherBytes= Base64.getDecoder().decode(cipherText.trim());
-        ////przypisanie klasie ilości rund do wykonania w zależności od długości klucza
+        cipherBytes= cipherText;
+
         if (keySize == 128) {
             rounds = 10;
         }
@@ -186,10 +186,6 @@ public class Decryptor {
         return (byte) invertedSbox[index];  //podmien na odpowiedni bajt
     }
 
-    public byte[][] InvertedMixColumns(byte[][] block) {
-        return block;
-    }
-
     public byte multiplyBy(byte b, int howMuch) {
         switch (howMuch) {
             case 1:
@@ -222,11 +218,10 @@ public class Decryptor {
     }
 
 
-    //!!!NA KONCU PAMIETAC ZEBY USUNAC PADDING PO WSZYSTKICH OPERACJACH!!!
     public void decrypt(){
         for (int blockCount = 0; blockCount < cipherBlocksList.size(); blockCount++) {  //dla każdego bloku wykonaj rundy
             byte[][] block = cipherBlocksList.get(blockCount);    //zmienna przechowująca bierzący blok, dla którego wykonujemy deszyfrowanie
-            addRoundKey(block,0);
+            addRoundKey(block,0); //zaczynamy deszyfrowanie od ostatniego klucza (odwrotna kolejność)
             for(int round=1;round<=rounds;round++){
                 byte[][] blockTemp = cipherBlocksList.get(blockCount); //zmienna tymczasowa, która przechowuje zmiany na bierzącym bloku
                 for(int row=0;row<4;row++){
@@ -235,9 +230,9 @@ public class Decryptor {
                         blockRow[col]=blockTemp[row][col];
                     }
                     if(row!=0){
-                        blockRow=InvertedShiftRow(blockRow,row);
+                        byte[] shiftedRow=InvertedShiftRow(blockRow,row);
                         for(int col=0;col<4;col++){
-                            blockTemp[row][col]=blockRow[col];  // INVERTED shift rows
+                            blockTemp[row][col]=shiftedRow[col];  // INVERTED shift rows
                         }
                     }
                 }
@@ -301,14 +296,12 @@ public class Decryptor {
 
     // wynik po usunięciu padding
     public String getDecryptedText() {
-
         byte[] table = removePadding();
-
-        return new String(table, java.nio.charset.StandardCharsets.UTF_8);
+        return new String(table);
     }
+
     public byte[] getDecryptedBytes(){
-        byte[] table = removePadding();
-        return table;
+        return removePadding();
     }
 
 

@@ -63,7 +63,6 @@ public class Encryptor {
     public Encryptor(byte[] plainText, int keySize) {
 
         this.keySize = keySize;
-        //plainBytes = plainText.getBytes(StandardCharsets.UTF_8);
         plainBytes = plainText;
         //przypisanie klasie ilości rund do wykonania w zależności od długości klucza
         if (keySize == 128) {
@@ -85,7 +84,7 @@ public class Encryptor {
         textToByteBlocks(); //podział teksu jawnego w postaci bajtów na bloki
 
         //!!!debugowanie!!!
-        System.out.println("Main Key: " + mainKey.toString());
+        System.out.println("Main Key: " + mainKey);
         for (int i = 0; i <rounds; i++) {
             byte[] table = roundKeys[i];
             for (byte b : table) {
@@ -109,31 +108,44 @@ public class Encryptor {
 
     public void keyExpansion() {
         //podział klucza głównego na słowa
-        int howManyWordsInKey=keySize/32;
-        byte[][] mainKeyWords = new byte[howManyWordsInKey][];    //[ile słów dla danej dlugosci klucza (w1-w4)][4 bajty reprezentujace pojedyncze slowo] - nr slowa/to slowo
-        for (int i = 0; i < howManyWordsInKey; i++) {
-            //iteruje po numerze słowa
-            byte[] word = new byte[4]; //tworzy pojedyncze slowo
-            for (int j = 0; j < 4; j ++) {
-                //iteruje po bajtach w słowie
-                word[j] = mainKey[i*4+j]; //zapisuje bajty z klucza do słowa
-            }
-            mainKeyWords[i] = word; //zapisuje wyciete slowo z klucza
-        }
+        byte[][] mainKeyWords = separateWords(mainKey);
+
         for(int i=0;i<=rounds;i++) {
-            byte[] newKey;
+            byte[] newKey = new byte[128];
             newKey = generateKey(i, mainKeyWords);
             roundKeys[i] = newKey;
         }
     }
 
+    public byte[][] separateWords(byte[] key) {
+        int howManyWordsInKey=keySize/32;
+        byte[][] KeyWords = new byte[howManyWordsInKey][];    //[ile słów dla danej dlugosci klucza (w1-w4)][4 bajty reprezentujace pojedyncze slowo] - nr slowa/to slowo
+        for (int i = 0; i < howManyWordsInKey; i++) {
+            //iteruje po numerze słowa
+            byte[] word = new byte[4]; //tworzy pojedyncze slowo
+            for (int j = 0; j < 4; j ++) {
+                //iteruje po bajtach w słowie
+                word[j] = key[i*4+j]; //zapisuje bajty z klucza do słowa
+            }
+            KeyWords[i] = word; //zapisuje wyciete slowo z klucza
+        }
+        return KeyWords;
+    }
+
     //gemeruje pojedynczy klucz dla numeru rundy przedazanego jako parament
     public byte[] generateKey(int round, byte[][] mainKeyWords) {
         byte[] temp = new byte[4]; //wyrazenie dla dla slowa pierwszego słowa w podlluczu
-        byte[] key = new byte[keySize/8];   //zwracany podklucz, rozmiar=(keysize/8)=liczba bajtów
+        byte[] key = new byte[128];   //zwracany podklucz, rozmiar=(keysize/8)=liczba bajtów
         byte[] rcon = intToByteTable(Rcon[round]);
 
-        temp = SubWord(RotWord(mainKeyWords[mainKeyWords.length-1]));
+        byte[][] keyForGeneration = new byte[keySize/32][];
+        if (round == 0) {
+            keyForGeneration = mainKeyWords;
+        } else {
+            keyForGeneration = separateWords(roundKeys[round-1]);
+        }
+
+        temp = SubWord(RotWord(keyForGeneration[keyForGeneration.length-1]));
 
         for (int i = 0; i < 4; i++) {
             temp[i] ^= rcon[i]; //xorowanie sub words z rcon
@@ -142,19 +154,19 @@ public class Encryptor {
         //pierwsze słowo klucza
         //xorowanie pierwszego slowa z klucza glownego z wyliczonym wyrazeniem
         for (int i = 0 ; i < 4; i++) {
-            key[i] = (byte) (mainKeyWords[0][i] ^ temp[i]);
+            key[i] = (byte) (keyForGeneration[0][i] ^ temp[i]);
         }
 
         //licznik miejsca w kluczu (4 poprzednie już są dodane)
-        int positionInMainKey = 4;
+        int positionInKey = 4;
 
-        for (int i=1;i<mainKeyWords.length;i++)
+        for (int i=1;i<keyForGeneration.length;i++)
         {
             //iteruje po słowach
             for (int j = 0; j < 4; j++) {
-                key[positionInMainKey + j] = (byte) (key[positionInMainKey + j - 4] ^ mainKeyWords[i][j]);  //xorowanie pozostalych slow
+                key[positionInKey + j] = (byte) (key[positionInKey + j - 4] ^ keyForGeneration[i][j]);  //xorowanie pozostalych slow
             }
-            positionInMainKey+=4;
+            positionInKey+=4;
         }
 
         return key;
@@ -232,9 +244,9 @@ public class Encryptor {
 
         //sprawdzenie i uzupełnienie zerami jeśli tekst nie jest wielokrotnościa 16 bajtów
         if (length % 16 != 0) {
-             this.padding = 16 - (length % 16);
+            this.padding = 16 - (length % 16);  //liczba dodanych bajtów
             byte[] paddedBytes = Arrays.copyOf(plainBytes, length + this.padding);
-            plainBytes = paddedBytes;
+            this.plainBytes = paddedBytes;
         }
 
         //podzial tekstu na bloki
@@ -289,9 +301,9 @@ public class Encryptor {
                         blockRow[col]=blockTemp[row][col];
                     }
                     if(row!=0){
-                        blockRow=ShiftRow(blockRow,row);
+                        byte[] shiftedRow = ShiftRow(blockRow, row);
                         for(int col=0;col<4;col++){
-                            blockTemp[row][col]=blockRow[col];  //shift rows
+                            blockTemp[row][col]=shiftedRow[col];  //shift rows
                         }
                     }
                 }
@@ -321,7 +333,12 @@ public class Encryptor {
                 }
 
                 addRoundKey(blockTemp, round);    //add round key na koniec
-                blocksList.set(blockCount,blockTemp); //podmiana bloku na zmieniony po operacjach
+                //blocksList.set(blockCount,blockTemp); //podmiana bloku na zmieniony po operacjach
+                byte[][] newBlock = new byte[4][4];
+                for (int i = 0; i < 4; i++) {
+                    System.arraycopy(blockTemp[i], 0, newBlock[i], 0, 4);
+                }
+                blocksList.set(blockCount, newBlock);
             }
         }
 
@@ -332,8 +349,8 @@ public class Encryptor {
 
     }
 
-    // zwraca zaszyfrowany tekst w postaci String (razem z padding)
-    public String joinEncryptedText() {
+    // zwraca zaszyfrowany tekst w postaci tablicy bajtów (razem z padding)
+    public byte[] joinEncryptedText() {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -345,9 +362,7 @@ public class Encryptor {
                 }
             }
 
-        byte[] encryptedBytes = outputStream.toByteArray();
-
-        return Base64.getEncoder().withoutPadding().encodeToString(encryptedBytes);
+        return outputStream.toByteArray();
     }
 
     public byte[][] getRoundKeys() {
