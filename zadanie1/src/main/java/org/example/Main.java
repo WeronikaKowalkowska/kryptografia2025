@@ -8,16 +8,25 @@ public class Main {
     public static void main(String[] args) {
 
         int keysize = 128;
-        Encryptor encryptor = new Encryptor("Szyfrowanie AES używa bloków 128-bitowych".getBytes(), keysize);
+        //String originalText = "Witaj, świecie!";
+        String originalText = "hejka";
+
+        Encryptor encryptor = new Encryptor(originalText.getBytes(StandardCharsets.UTF_8), keysize);
         encryptor.encrypt();
-        String text = Base64.getEncoder().withoutPadding().encodeToString(encryptor.joinEncryptedText());
-        System.out.println("Wynik: " + text);
-        System.out.println("Wynik bajtowy: " + Arrays.toString(encryptor.joinEncryptedText()));
+        System.out.println("Szyfrogram: " + encryptor.bytesToHex(encryptor.joinEncryptedText()));
 
-        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, encryptor.getRoundKeys(), encryptor.getPaddingCount());
+        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, encryptor.getRoundKeys());
         decryptor.decrypt();
-        System.out.println("Wynik:" + decryptor.getDecryptedText());
-        System.out.println("Odszyfrowane bajty: " + Arrays.toString(decryptor.getDecryptedText().getBytes(StandardCharsets.UTF_8)));
 
+        String decryptedText = decryptor.decryptedText();
+        System.out.println("Test odszyfrowany: " + decryptedText);
+
+
+        //sprawdzenie poprawności
+        if (originalText.equals(decryptedText)) {
+            System.out.println("✅ Odszyfrowany tekst jest zgodny z oryginałem!");
+        } else {
+            System.out.println("❌ Błąd: Odszyfrowany tekst NIE zgadza się z oryginałem!");
+        }
     }
 }
