@@ -363,11 +363,11 @@ public class JavaFxApp extends Application {
         }
     }
 
-    private void decryptText() {
-        Decryptor decryptor = new Decryptor(textToDecrypt,keySize, roundKeys);
-        decryptor.decrypt();
-        System.out.println("Rozszyfrowano: " + decryptor.decryptedText());
-    }
+//    private void decryptText() {
+//        Decryptor decryptor = new Decryptor(textToDecrypt,keySize, roundKeys, padding);
+//        decryptor.decrypt();
+//        System.out.println("Rozszyfrowano: " + decryptor.decryptedText());
+//    }
 
     public static void main(String[] args) {
         launch();

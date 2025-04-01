@@ -69,6 +69,7 @@ public class Encryptor {
 
         this.roundKeys = new byte[rounds + 1][];    //rozmiar jest o jeden więcej, ponieważ generujemy na jeden podklucz więcej niż ilość rund
         this.blocksList = new ArrayList<>();
+        this.padding = 0;
 
         mainKeyGenerate();     //generacja klucza głównego
         keyExpansion();        //generowanie podkluczy dla wszystkich rund
@@ -93,7 +94,6 @@ public class Encryptor {
             }
             this.plainBytes = padded;
         }
-
         //podział tekstu na bloki
         for (int i = 0; i < plainBytes.length; i += 16) {    //iteracja po blokach teksu
             byte[][] block = new byte[4][4];

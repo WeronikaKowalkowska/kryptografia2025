@@ -2,13 +2,13 @@ package org.example;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Decryptor {
     private int keySize;
     private int rounds;
     private byte[][] roundKeys = new byte[rounds + 1][];
     private byte[] cipherBytes;
+    private int paddingCount;
     private ArrayList<byte[][]> cipherBlocksList;
 
     private static final int[] invertedSbox = {
@@ -31,7 +31,7 @@ public class Decryptor {
     };
 
     //konstruktor
-    public Decryptor(byte[] cipherText, int keySize, byte[][] roundKeys) {
+    public Decryptor(byte[] cipherText, int keySize, byte[][] roundKeys, int paddingCount) {
 
         this.keySize = keySize;
         cipherBytes = cipherText;
@@ -48,6 +48,7 @@ public class Decryptor {
 
         this.roundKeys = reverseRoundKeys(roundKeys);
         this.cipherBlocksList = new ArrayList<>();
+        this.paddingCount = paddingCount;
 
         textToByteBlocks();
 
@@ -232,9 +233,9 @@ public class Decryptor {
 
         byte[] blockOneDimensional = joinEncryptedText();    //tablica jednowymiarowa dla zapisu wszystkich bloków
 
-//        if (blockOneDimensional.length % 16 == 0) {     //przypadek, gdzy nie ma paddingu
-//            return blockOneDimensional;
-//        }
+        if (paddingCount == 0) {     //przypadek, gdzy nie ma paddingu
+            return blockOneDimensional;
+        }
 //            System.out.println(Arrays.toString(blockOneDimensional));
 //
 //        int padLength = blockOneDimensional[blockOneDimensional.length - 1] & 0xFF; //liczba dodanego paddingu z ostatniego bajta
