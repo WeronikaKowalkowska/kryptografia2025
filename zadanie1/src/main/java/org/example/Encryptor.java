@@ -15,6 +15,10 @@ public class Encryptor {
         return keySize;
     }
 
+    public byte[] getMainKey() {
+        return mainKey;
+    }
+
     private ArrayList<byte[][]> blocksList;     //lista tablic bajtów tekstu jawnego podzielonego na 16-bajtowe bloki
     private int padding;                        //ilość dodanych zer do ostatniego bloku
     //pierwszy wymiar określa liczbę kluczy rundowych; drugi wymiar to tablica bajtów reprezentujących klucz dla danej rundy

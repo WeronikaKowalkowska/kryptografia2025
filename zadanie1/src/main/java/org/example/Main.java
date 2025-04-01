@@ -13,9 +13,10 @@ public class Main {
         Encryptor encryptor = new Encryptor(originalText.getBytes(StandardCharsets.UTF_8), keysize);
         encryptor.encrypt();
         int padding = encryptor.getPadding();
+        byte[] mainKey = encryptor.getMainKey();
         System.out.println("Szyfrogram: " + encryptor.bytesToHex(encryptor.joinEncryptedText()));
 
-        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, encryptor.getRoundKeys(), padding);
+        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, mainKey,padding);
         decryptor.decrypt();
 
         String decryptedText = decryptor.decryptedText();
