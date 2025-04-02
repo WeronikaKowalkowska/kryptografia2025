@@ -16,7 +16,7 @@ public class Main {
         byte[] mainKey = encryptor.getMainKey();
         System.out.println("Szyfrogram: " + encryptor.bytesToHex(encryptor.joinEncryptedText()));
 
-        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, mainKey,padding);
+        Decryptor decryptor = new Decryptor(encryptor.joinEncryptedText(), keysize, mainKey);
         decryptor.decrypt();
 
         String decryptedText = decryptor.decryptedText();

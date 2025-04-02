@@ -1,5 +1,3 @@
-package org.example;
-
 import javax.crypto.KeyGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;

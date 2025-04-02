@@ -30,6 +30,7 @@ public class JavaFxApp extends Application {
     private int keySizeDecryption;
     private int paddedBytesDecryption;
     private byte  [][] roundKeysDecryption;;
+    private byte[] mainKey;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -418,6 +419,7 @@ public class JavaFxApp extends Application {
                     this.roundKeys = encryptor.getRoundKeys();
                     this.paddedBytes = encryptor.getPadding();
                     this.keySize = encryptor.getKeySize();
+                    this.mainKey = encryptor.getMainKey();
                 }
                 if (goBack.isSelected()) {
                     try {
@@ -441,7 +443,7 @@ public class JavaFxApp extends Application {
     }
 
     public void decryptText() {
-        Decryptor decryptor = new Decryptor(textToDecrypt, selectedKey, roundKeysDecryption, paddedBytes);
+        Decryptor decryptor = new Decryptor(textToDecrypt, keySize,mainKey, paddedBytes);
         decryptor.decrypt();
         System.out.println("Odszyfrowano: " + decryptor.decryptedText());
         try {
