@@ -8,15 +8,6 @@ public class Encryptor {
     private int keySize;                        //długość klucza
     private int rounds;                         //ilość rund do wykonania na pojedynczym bloku tekstu
     private byte[] mainKey;                     //klucz główny
-
-    public int getKeySize() {
-        return keySize;
-    }
-
-    public byte[] getMainKey() {
-        return mainKey;
-    }
-
     private ArrayList<byte[][]> blocksList;     //lista tablic bajtów tekstu jawnego podzielonego na 16-bajtowe bloki
     private int padding;                        //ilość dodanych zer do ostatniego bloku
     //pierwszy wymiar określa liczbę kluczy rundowych; drugi wymiar to tablica bajtów reprezentujących klucz dla danej rundy
@@ -77,22 +68,20 @@ public class Encryptor {
         keyExpansion();        //generowanie podkluczy dla wszystkich rund
         textToByteBlocks();    //podział teksu jawnego w postaci bajtów na bloki
 
-        System.out.println("Klucz główny: " + bytesToHex(mainKey));
-
     }
 
     //podział na dwuwymiarowe bloki
     public void textToByteBlocks() {
         int length = plainBytes.length;          //długość tekstu jawnego zamienionego na bajty
 
-        //sprawdzenie i uzupełnienie zerami, jeżeli tekst nie jest wielokrotnością 16 bajtów
+        //sprawdzenie i uzupełnienie wartościami, o ile trzeba uzupełnić do 16 bajtowego bloku (nawet w przypadku gdy padding nie jest potrzebny)
         this.padding = 16 - (length % 16);   //liczba dodanych bajtów zapisywana do zmiennej
         byte[] padded = new byte[plainBytes.length + padding];
         for (int i = 0; i < length; i++) {
             padded[i] = plainBytes[i];  //kopiujemy bajty
         }
         for (int i = length; i < padded.length; i++) {
-            padded[i] = (byte) padding;     //zapisujemy ile dodaliśmy paddingu jako dodatkowe padding bajtów
+            padded[i] = (byte) padding;     //zapisujemy ile dodaliśmy paddingu
         }
         this.plainBytes = padded;
 
@@ -308,19 +297,15 @@ public class Encryptor {
         return all;
     }
 
-    public String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X", b));
-        }
-        return sb.toString();
-    }
-
     public byte[][] getRoundKeys() {
         return roundKeys;
     }
 
-    public int getPadding() {
-        return padding;
+    public int getKeySize() {
+        return keySize;
+    }
+
+    public byte[] getMainKey() {
+        return mainKey;
     }
 }

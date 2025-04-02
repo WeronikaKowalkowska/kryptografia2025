@@ -6,7 +6,6 @@ public class Decryptor {
     private int rounds;
     private byte[][] roundKeys = new byte[rounds + 1][];
     private byte[] cipherBytes;
-   // private int paddingCount;
     private byte[] mainKey;
     private ArrayList<byte[][]> cipherBlocksList;
 
@@ -78,7 +77,6 @@ public class Decryptor {
         }
 
         this.cipherBlocksList = new ArrayList<>();
-        //this.paddingCount = paddingCount;
 
         keyExpansion();        //generowanie podkluczy dla wszystkich rund
         textToByteBlocks();
@@ -327,37 +325,14 @@ public class Decryptor {
         return all;
     }
 
-    //usuwanie dodanych zer
+    //usuwanie dodanych liczb
     public byte[] removePadding() {
 
         byte[] blockOneDimensional = joinEncryptedText();    //tablica jednowymiarowa dla zapisu wszystkich bloków
-
-//        if (paddingCount == 0) {     //przypadek, gdzy nie ma paddingu
-//            return blockOneDimensional;
-//        }
-//            System.out.println(Arrays.toString(blockOneDimensional));
-//
-//        int padLength = blockOneDimensional[blockOneDimensional.length - 1] & 0xFF; //liczba dodanego paddingu z ostatniego bajta
-//
-//        System.out.println(blockOneDimensional.length);
-//        System.out.println(padLength);
-//
-//        byte[] blockOneDimensionalNoPadding = new byte[blockOneDimensional.length - padLength];     //przepisuje wszystkie wartości oprócz paddingu
-//
-//        for (int i = 0; i < blockOneDimensionalNoPadding.length; i++) {
-//            blockOneDimensionalNoPadding[i] = blockOneDimensional[i];
-//        }
-//
-//        return blockOneDimensionalNoPadding;
         int padLength = blockOneDimensional[blockOneDimensional.length - 1] & 0xFF;
         byte[] unpadded = new byte[blockOneDimensional.length - padLength];
         System.arraycopy(blockOneDimensional, 0, unpadded, 0, unpadded.length);
         return unpadded;
     }
-
-    public String decryptedText() {
-        return new String(removePadding(), StandardCharsets.UTF_8);
-    }
-
 
 }

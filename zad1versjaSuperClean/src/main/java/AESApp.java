@@ -13,15 +13,15 @@ import java.nio.file.Files;
 
 public class AESApp extends Application {
 
-    private ComboBox<Integer> keySizeComboBox;
-    private TextArea inputTextArea;
-    private TextArea outputTextArea;
+    private ComboBox<Integer> keySizeComboBox;  //wybór długości klucza
+    private TextArea inputTextArea;     //pole do wpisania tekstu do zaszyfrowania/deszyfrowania
+    private TextArea outputTextArea;    //pole wyświetlające wynik operacji.
     private Button encryptTextButton;
     private Button decryptTextButton;
     private Button encryptFileButton;
     private Button decryptFileButton;
-    private Label statusLabel;
-    private TextField keyTextField;
+    private Label statusLabel;      //etykieta informująca użytkownika o statusie operacji
+    private TextField keyTextField;    //pole do wprowadzenia klucza AES w formacie heksadecymalnym
 
     public static void main(String[] args) {
         launch(args);
@@ -31,7 +31,7 @@ public class AESApp extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle("AES Encryption/Decryption");
 
-        // Create UI components
+        //tworzenie komponentów
         keySizeComboBox = new ComboBox<>();
         keySizeComboBox.getItems().addAll(128, 192, 256);
         keySizeComboBox.setValue(128);
@@ -57,13 +57,13 @@ public class AESApp extends Application {
         keyTextField.setPromptText("Enter encryption key (hex) for decryption");
         keyTextField.setVisible(false);
 
-        // Set button actions
+        //ustawienie akcji dla przycisków
         encryptTextButton.setOnAction(e -> encryptText());
         decryptTextButton.setOnAction(e -> decryptText());
         encryptFileButton.setOnAction(e -> encryptFile(primaryStage));
         decryptFileButton.setOnAction(e -> decryptFile(primaryStage));
 
-        // Layout
+        //dodawanie układów
         HBox keySizeBox = new HBox(10, new Label("Key Size (bits):"), keySizeComboBox);
         keySizeBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -83,7 +83,7 @@ public class AESApp extends Application {
         root.setPadding(new Insets(15));
         root.setStyle("-fx-background-color: pink;");
 
-        // Set preferred sizes
+        //ustawienie rozmiaru okienek
         inputTextArea.setPrefSize(300, 200);
         outputTextArea.setPrefSize(300, 200);
 
@@ -92,6 +92,7 @@ public class AESApp extends Application {
         primaryStage.show();
     }
 
+    //metoda w przypadku wyboru szyfrowania tekstu
     private void encryptText() {
         String text = inputTextArea.getText();
         if (text.isEmpty()) {
@@ -100,6 +101,7 @@ public class AESApp extends Application {
         }
 
         try {
+            //pobiera wybrany rozmiar klucza
             int keySize = keySizeComboBox.getValue();
             byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
 
@@ -110,10 +112,10 @@ public class AESApp extends Application {
             String hexResult = bytesToHex(encryptedBytes);
             String hexKey = bytesToHex(encryptor.getMainKey());
 
-            outputTextArea.setText("Encrypted Text:\n" + hexResult + "\n\nEncryption Key (keep this safe!):\n" + hexKey);
+            outputTextArea.setText(hexResult);
             showStatus("Text encrypted successfully with " + keySize + "-bit key", "green");
 
-            // Show key field for potential decryption
+            //pokazanie klucza głównego
             keyTextField.setVisible(true);
             keyTextField.setText(hexKey);
         } catch (Exception e) {
@@ -122,19 +124,21 @@ public class AESApp extends Application {
         }
     }
 
+    //metoda w przypadku wyboru deszyfrowania tekstu
     private void decryptText() {
-        String text = inputTextArea.getText().trim();
+        String text = inputTextArea.getText().trim();    //.trim() w do usuwania białych znaków
         if (text.isEmpty()) {
             showStatus("Please enter hex string to decrypt", "red");
             return;
         }
 
-        String hexKey = keyTextField.getText().trim();
+        String hexKey = keyTextField.getText().trim();  //.trim() w do usuwania białych znaków
         if (hexKey.isEmpty()) {
             showStatus("Please enter the encryption key", "red");
             return;
         }
 
+        //sprawdzenie, czy podany klucz ma odpowiedni rozmiar
         try {
             byte[] keyBytes = hexToBytes(hexKey);
             int keySize = keyBytes.length * 8;
@@ -152,7 +156,7 @@ public class AESApp extends Application {
             byte[] decryptedBytes = decryptor.removePadding();
             String result = new String(decryptedBytes, StandardCharsets.UTF_8);
 
-            outputTextArea.setText("Decrypted Text:\n" + result);
+            outputTextArea.setText(result);
             showStatus("Text decrypted successfully", "green");
         } catch (Exception e) {
             showStatus("Error during decryption: " + e.getMessage(), "red");
@@ -160,6 +164,7 @@ public class AESApp extends Application {
         }
     }
 
+    //metoda w przypadku wyboru szyfrowania pliku
     private void encryptFile(Stage primaryStage) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select File to Encrypt");
@@ -167,7 +172,9 @@ public class AESApp extends Application {
 
         if (file != null) {
             try {
+                //pobiera wybrany rozmiar klucza
                 int keySize = keySizeComboBox.getValue();
+                //odczytanie tekstu z pliku
                 byte[] fileBytes = Files.readAllBytes(file.toPath());
 
                 Encryptor encryptor = new Encryptor(fileBytes, keySize);
@@ -176,19 +183,20 @@ public class AESApp extends Application {
                 byte[] encryptedBytes = encryptor.joinEncryptedText();
                 String hexKey = bytesToHex(encryptor.getMainKey());
 
-                // Save encrypted file (as binary)
+                //wybór pliku do zapisu szyfrogramu
                 FileChooser saveChooser = new FileChooser();
                 saveChooser.setTitle("Save Encrypted File");
-                saveChooser.setInitialFileName(file.getName() + ".enc");
+                saveChooser.setInitialFileName(file.getName() + ".txt");
                 File saveFile = saveChooser.showSaveDialog(primaryStage);
 
                 if (saveFile != null) {
-                    Files.write(saveFile.toPath(), encryptedBytes); // Write as binary
+                    //zapis szyfrogramu do pliku
+                    Files.write(saveFile.toPath(), encryptedBytes);
                     showStatus("File encrypted successfully with " + keySize + "-bit key and saved to " + saveFile.getName(), "green");
 
-                    // Display the key
-                    outputTextArea.setText("File encrypted successfully!\n\nEncryption Key (keep this safe!):\n" + hexKey);
+                    outputTextArea.setText("File encrypted successfully!");
                     keyTextField.setVisible(true);
+                    //wyświetlenie klucza głownego
                     keyTextField.setText(hexKey);
                 }
             } catch (Exception e) {
@@ -198,6 +206,7 @@ public class AESApp extends Application {
         }
     }
 
+    //metoda w przypadku wyboru deszyfrowania pliku
     private void decryptFile(Stage primaryStage) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select File to Decrypt");
@@ -205,7 +214,7 @@ public class AESApp extends Application {
 
         if (file != null) {
             try {
-                String hexKey = keyTextField.getText().trim();
+                String hexKey = keyTextField.getText().trim();       //.trim() w do usuwania białych znaków
                 if (hexKey.isEmpty()) {
                     TextInputDialog keyDialog = new TextInputDialog();
                     keyDialog.setTitle("Decryption Key Needed");
@@ -223,12 +232,13 @@ public class AESApp extends Application {
                 byte[] keyBytes = hexToBytes(hexKey);
                 int keySize = keyBytes.length * 8;
 
+                //sprawdzenie, czy podany klucz ma odpowiedni rozmiar
                 if (keySize != 128 && keySize != 192 && keySize != 256) {
                     showStatus("Invalid key size. Must be 128, 192 or 256 bits", "red");
                     return;
                 }
 
-                // Read encrypted file as binary
+                //odczytanie szyfrogramu z pliku
                 byte[] encryptedBytes = Files.readAllBytes(file.toPath());
 
                 Decryptor decryptor = new Decryptor(encryptedBytes, keySize, keyBytes);
@@ -236,18 +246,18 @@ public class AESApp extends Application {
 
                 byte[] decryptedBytes = decryptor.removePadding();
 
-                // Save decrypted file (as binary)
                 FileChooser saveChooser = new FileChooser();
                 saveChooser.setTitle("Save Decrypted File");
                 String originalName = file.getName();
-                if (originalName.endsWith(".enc")) {
-                    originalName = originalName.substring(0, originalName.length() - 4);
+                if (originalName.endsWith(".txt")) {
+                    originalName = originalName.substring(0, originalName.length() - 4);    //usuwanie formatu .enc, żeby wynikowy format był taki jak pliku przez szyfrowaniem
                 }
                 saveChooser.setInitialFileName(originalName);
                 File saveFile = saveChooser.showSaveDialog(primaryStage);
 
                 if (saveFile != null) {
-                    Files.write(saveFile.toPath(), decryptedBytes); // Write as binary
+                    //zapis odszyfrowanego tesku do pliku
+                    Files.write(saveFile.toPath(), decryptedBytes);
                     showStatus("File decrypted successfully and saved to " + saveFile.getName(), "green");
                     outputTextArea.setText("File decrypted successfully!");
                     keyTextField.setText(hexKey);
@@ -260,12 +270,13 @@ public class AESApp extends Application {
         }
     }
 
+    //metoda do wyświetlenia statusu operacji
     private void showStatus(String message, String color) {
         statusLabel.setText(message);
         statusLabel.setStyle("-fx-text-fill: " + color + ";");
     }
 
-    // Helper method to convert byte array to hex string
+    //metoda do konwersji bitów na napis heksadecymalny
     private static String bytesToHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
@@ -274,9 +285,9 @@ public class AESApp extends Application {
         return sb.toString();
     }
 
-    // Helper method to convert hex string to byte array
+    //metoda do konwersji napisu heksadecymalnego na bity
     private static byte[] hexToBytes(String hex) {
-        hex = hex.replaceAll("[^0-9A-Fa-f]", ""); // Remove non-hex characters
+        hex = hex.replaceAll("[^0-9A-Fa-f]", ""); //usuwa nieistniejące znaki
         int len = hex.length();
         if (len % 2 != 0) {
             throw new IllegalArgumentException("Hex string must have even length");
