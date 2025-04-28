@@ -19,12 +19,10 @@ public class Decryptor {
         this.q = q;
         this.h = h;
         this.b = b;
-        signature = signature.replace("[", "").replace("]", "").replace(",", "").replace(" ", "");
-        int middle = signature.length() / 2;
-        String firstHalf = signature.substring(0, middle);
-        String secondHalf = signature.substring(middle);
-        s1 = new BigInteger(firstHalf);
-        s2 = new BigInteger(secondHalf);
+        signature = signature.replace("[", "").replace("]", "");
+        String[] parts = signature.split(",");
+        s1 = new BigInteger(parts[0].trim());
+        s2 = new BigInteger(parts[1].trim());
         m = message;
         check_signature();
     }
@@ -38,7 +36,7 @@ public class Decryptor {
         }
         BigInteger u1 = hash_message(m).multiply(sPrim).mod(q);
         BigInteger u2 = sPrim.multiply(s1).mod(q);
-        BigInteger t = bigIntegerPow(h, u1, q).add(bigIntegerPow(b, u2, q)).mod(p).mod(q);
+        BigInteger t = bigIntegerPow(h, u1, p).multiply(bigIntegerPow(b, u2, p)).mod(p).mod(q);
         if (t.equals(s1)) {
             System.out.println("Signature verified");
         } else {
