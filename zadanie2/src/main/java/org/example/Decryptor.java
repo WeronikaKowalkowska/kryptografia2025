@@ -31,6 +31,7 @@ public class Decryptor {
     private BigInteger s2;
 
     private final byte[] m; //wiadomość (dokument) do zaszyfrowania
+    public boolean isSignatureValid;
 
     public Decryptor(String signature, byte[] message, BigInteger p, BigInteger q, BigInteger h, BigInteger b) {
         this.p = p;
@@ -41,23 +42,21 @@ public class Decryptor {
         s1 = new BigInteger(parts[0].trim());
         s2 = new BigInteger(parts[1].trim());
         m = message;
-        System.out.println("s2 = " + s2);
-        System.out.println("q  = " + q);
-        check_signature();
+        isSignatureValid = check_signature();
     }
 
     public boolean check_signature() {
         BigInteger sPrim;
         if (s2.gcd(q).equals(BigInteger.ONE)) {
             sPrim = s2.modInverse(q);
-            System.out.println("gcd(s2, q) = " + s2.gcd(q));
         } else {
-            System.out.println("gcd(s2, q) = " + s2.gcd(q));
             throw new ArithmeticException("s2 i q nie są względnie pierwsze, brak odwrotności.");
         }
         BigInteger u1 = hash_message(m).multiply(sPrim).mod(q);
         BigInteger u2 = sPrim.multiply(s1).mod(q);
-        BigInteger t = bigIntegerPow(h, u1, p).multiply(bigIntegerPow(b, u2, p)).mod(p).mod(q);
+        BigInteger hu1 = bigIntegerPow(h, u1, p);
+        BigInteger bu2 = bigIntegerPow(b, u2, p);
+        BigInteger t = hu1.multiply(bu2).mod(p).mod(q);
         return t.equals(s1);
     }
 
@@ -75,14 +74,14 @@ public class Decryptor {
 
     private static BigInteger bigIntegerPow(BigInteger base, BigInteger exponent, BigInteger mod) {
         BigInteger result = BigInteger.ONE;
-        base = base.mod(mod);  // Modulo dla podstawy (zapewnia, że nie będzie za dużej liczby)
+        base = base.mod(mod);  // modulo dla podstawy (zapewnia, że nie będzie za dużej liczby)
 
         while (exponent.compareTo(BigInteger.ZERO) > 0) {
-            if (exponent.testBit(0)) { // Jeśli wykładnik nieparzysty
-                result = result.multiply(base).mod(mod);  // Mnożymy przez podstawę i robimy modulo
+            if (exponent.testBit(0)) { // jeśli wykładnik nieparzysty
+                result = result.multiply(base).mod(mod);  // mnożymy przez podstawę i robimy modulo
             }
-            base = base.multiply(base).mod(mod);  // Podnosimy podstawę do kwadratu i bierzemy modulo
-            exponent = exponent.shiftRight(1); // Dzielimy wykładnik przez 2
+            base = base.multiply(base).mod(mod);  // podnosimy podstawę do kwadratu i bierzemy modulo
+            exponent = exponent.shiftRight(1); // dzielimy wykładnik przez 2
         }
         return result;
     }

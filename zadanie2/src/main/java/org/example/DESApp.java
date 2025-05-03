@@ -141,7 +141,6 @@ public class DESApp extends Application {
             b = encryptor.getB();
             signature = encryptor.getClenSignature();
 
-            String signature = encryptor.getClenSignature();
             String publicKey = encryptor.getB().toString();
 
             outputTextArea.setText(signature);
@@ -172,21 +171,13 @@ public class DESApp extends Application {
 
         //sprawdzenie, czy podany klucz ma odpowiedni rozmiar
         try {
-            byte[] keyBytes = hexKey.getBytes(StandardCharsets.UTF_8);
-            BigInteger keyBigInt = new BigInteger(1, keyBytes);
-//            int keySize = keyBytes.length * 8;
-//
-//            if (keySize != 640 && keySize != 768 && keySize != 1024) {
-//                showStatus("Invalid key size. Must be 640, 768 or 1024 bits", "red");
-//                return;
-//            }
+            BigInteger keyBigInt = new BigInteger(hexKey);
 
             byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
 
-            // (String signature, byte[] message, BigInteger p, BigInteger q, BigInteger h, BigInteger b)
             Decryptor decryptor = new Decryptor(signature ,textBytes, p, q, h, keyBigInt);
 
-            boolean result = decryptor.check_signature();
+            boolean result = decryptor.isSignatureValid;
             String resultStr = null;
             if (result) {
                 resultStr = "Signature verified successfully";
@@ -223,7 +214,6 @@ public class DESApp extends Application {
                 b = encryptor.getB();
                 signature = encryptor.getClenSignature();
 
-                String signature = encryptor.getClenSignature();
                 String publicKey = encryptor.getB().toString();
 
                 //wybór pliku do zapisu podpisu
@@ -272,23 +262,14 @@ public class DESApp extends Application {
                     }
                 }
 
-                byte[] keyBytes = hexKey.getBytes(StandardCharsets.UTF_8);
-                BigInteger keyBigInt = new BigInteger(1, keyBytes);
-//                int keySize = keyBytes.length * 8;
-//
-//
-//                //sprawdzenie, czy podany klucz ma odpowiedni rozmiar
-//                if (keySize != 640 && keySize != 768 && keySize != 1024) {
-//                    showStatus("Invalid key size. Must be 640, 768 or 1024 bits", "red");
-//                    return;
-//                }
+                 BigInteger keyBigInt = new BigInteger(hexKey);
 
                 //odczytanie szyfrogramu z pliku
                 byte[] encryptedBytes = Files.readAllBytes(file.toPath());
 
                 Decryptor decryptor = new Decryptor(signature ,encryptedBytes, p, q, h, keyBigInt);
 
-                boolean result = decryptor.check_signature();
+                boolean result = decryptor.isSignatureValid;
                 String resultStr = null;
                 if (result) {
                     resultStr = "Signature verified successfully";

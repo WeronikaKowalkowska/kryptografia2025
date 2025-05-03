@@ -19,7 +19,9 @@
 package org.example;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -41,6 +43,8 @@ public class Encryptor {
 
     private final byte[] m; //wiadomość (dokument)  do zaszyfrowania
     private List<BigInteger> signature;
+
+    private static final Random random = new SecureRandom();
 
     public String getSignature() {
         return signature.toString();
@@ -71,7 +75,6 @@ public class Encryptor {
     public Encryptor(int L, byte[] message) {
         m = message;
         //skrót wiadomości liczony funkcją hashującą SHA 1 lub 2 - w naszym przypadku SHA 1
-        BigInteger h2 = hash_message(m);
         generate_params(L);
         generate_signature();
     }
@@ -81,39 +84,37 @@ public class Encryptor {
             this.L = L;
         }
         N = 160;
-        p = BigInteger.probablePrime(this.L, new Random());  //tworzenie losowej liczby pierwszej o długości L
+        boolean flaga = true;
+        while (flaga){
+            q = BigInteger.probablePrime(N, random); //tworzenie losowej liczby pierwszej o długości N
+            BigInteger k = BigInteger.ONE;
+            do {
+                k = new BigInteger(L - N, random);
+            } while (k.equals(BigInteger.ZERO)); // k nie może być zerem, bo wtedy p = 1, a jedynka nie jest liczbą pierwszą
+            this.p = q.multiply(k).add(BigInteger.ONE); // p - 1 = kq -> p = kq + 1
+            if (p.isProbablePrime(40)) {
+                flaga = false;
+            }
+        }
         BigInteger pMinusOne = p.subtract(BigInteger.ONE); // p-1 jak BigInteger
-//        BigInteger randomNumber = new BigInteger(N, new Random()); //tworzenie losowej liczby pierwszej o długości N
-//        BigInteger remainder = randomNumber.mod(pMinusOne); // q mod (p-1)
-//        q = randomNumber.divide(pMinusOne).multiply(pMinusOne); // część całkowita z dzielenia p-1
         do {
-            q = BigInteger.probablePrime(N, new Random());
-            BigInteger k = new BigInteger(L - N, new Random());
-            p = q.multiply(k).add(BigInteger.ONE);
-        } while (!p.isProbablePrime(100));
-//        if (!remainder.equals(BigInteger.ZERO)) {
-//            BigInteger k = new BigInteger(N, new Random()); // losowa liczba, przez którą będziemy mnożyć
-//            q = k.multiply(pMinusOne);
-//        }
+            h = new BigInteger(N, random); // losowanie h aż będzie mniejsze lub równe p-1
+        } while (bigIntegerPow(h, (pMinusOne.divide(q)), p).equals(BigInteger.ONE)); // wszystkie liczby w {1, 2, ..., p-1} są w Z*_p, gdy p - liczba pierwsza
         do {
-            h = new BigInteger(N, new Random()); // losowanie h aż będzie mniejsze lub równe p-1
-        } while (h.compareTo(BigInteger.ONE) < 0 || h.compareTo(pMinusOne) > 0); // wszystkie liczby w {1, 2, ..., p-1} są w Z*_p, gdy p - liczba pierwsza
-        do {
-            a = new BigInteger(N, new Random()); // losowanie a aż będzie mniejsze od q
-        } while (a.compareTo(q) >= 0);
-        b = bigIntegerPow(h, a, p).mod(p);
+            a = new BigInteger(N, random); // losowanie a aż będzie mniejsze od q
+        } while (a.compareTo(q) >= 0); // 0 < a < q
+        b = bigIntegerPow(h, a, p);
     }
 
     //tworzenie pary kluczy
     private void generate_signature() {
-        //wartość losowa 0 < r <= q-1
         BigInteger r = null;
         BigInteger rPrim = null;
         boolean flaga = true;
         while (flaga){
             do {
-                r = new BigInteger(N, new Random());
-            } while (r.compareTo(BigInteger.ZERO) <= 0 || r.compareTo(q.subtract(BigInteger.ONE)) > 0);
+                r = new BigInteger(N, random);
+            } while (r.compareTo(BigInteger.ZERO) <= 0 || r.compareTo(q) >= 0); // 0 < r ≤ q - 1
             if (r.gcd(q).equals(BigInteger.ONE)) {
                 rPrim = r.modInverse(q);
                 flaga = false;
@@ -121,10 +122,9 @@ public class Encryptor {
         }
         BigInteger s1 = bigIntegerPow(h, r, p).mod(q);
         BigInteger f = hash_message(m);
-        BigInteger s2 = rPrim.multiply(f.add(a.multiply(s1))).mod(q);
+        BigInteger hashMultAs1 = f.add(a.multiply(s1));
+        BigInteger s2 = rPrim.multiply(hashMultAs1).mod(q);
         signature = Arrays.asList(s1, s2);
-        System.out.println("s2 = " + s2);
-        System.out.println("q  = " + q);
     }
 
     //https://stackoverflow.com/questions/4895523/java-string-to-sha1
