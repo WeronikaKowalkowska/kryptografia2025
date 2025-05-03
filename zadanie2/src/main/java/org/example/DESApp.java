@@ -45,12 +45,14 @@ public class DESApp extends Application {
     private Button decryptFileButton;
     private Label statusLabel;      //etykieta informująca użytkownika o statusie operacji
     private TextField keyTextField;    //pole do wprowadzenia klucza AES w formacie heksadecymalnym
+    private TextField pTextField;
+    private TextField qTextField;
+    private TextField hTextField;
 
     private String signature;   // podpis elektroniczny
     private BigInteger p;
     private BigInteger q;
     private BigInteger h;
-    private BigInteger b;       // klucz publiczny
 
     public static void main(String[] args) {
         launch(args);
@@ -86,6 +88,18 @@ public class DESApp extends Application {
         keyTextField.setPromptText("Enter public key for verification");
         keyTextField.setVisible(false);
 
+        pTextField = new TextField();
+        pTextField.setPromptText("p (prime)");
+        pTextField.setEditable(false);
+
+        qTextField = new TextField();
+        qTextField.setPromptText("q (prime)");
+        qTextField.setEditable(false);
+
+        hTextField = new TextField();
+        hTextField.setPromptText("h (parameter)");
+        hTextField.setEditable(false);
+
         //ustawienie akcji dla przycisków
         encryptTextButton.setOnAction(e -> encryptText());
         decryptTextButton.setOnAction(e -> decryptText());
@@ -103,7 +117,16 @@ public class DESApp extends Application {
         fileButtons.setAlignment(Pos.CENTER);
 
         VBox leftVBox = new VBox(10, new Label("Input:"), inputTextArea, textButtons);
-        VBox rightVBox = new VBox(10, new Label("Output:"), outputTextArea, fileButtons, keyTextField);
+
+        VBox rightVBox = new VBox(10,
+                new Label("Output:"),
+                outputTextArea,
+                fileButtons,
+                keyTextField,
+                new Label("p:"), pTextField,
+                new Label("q:"), qTextField,
+                new Label("h:"), hTextField
+        );
 
         HBox mainContent = new HBox(20, leftVBox, rightVBox);
         mainContent.setPadding(new Insets(10));
@@ -138,7 +161,6 @@ public class DESApp extends Application {
             p = encryptor.getP();
             q = encryptor.getQ();
             h = encryptor.getH();
-            b = encryptor.getB();
             signature = encryptor.getClenSignature();
 
             String publicKey = encryptor.getB().toString();
@@ -149,6 +171,10 @@ public class DESApp extends Application {
             //pokazanie klucza głównego
             keyTextField.setVisible(true);
             keyTextField.setText(publicKey);
+            pTextField.setText(p.toString());
+            qTextField.setText(q.toString());
+            hTextField.setText(h.toString());
+
         } catch (Exception e) {
             showStatus("Error during the process: " + e.getMessage(), "red");
             e.printStackTrace();
@@ -169,9 +195,21 @@ public class DESApp extends Application {
             return;
         }
 
+        String pStr = pTextField.getText().trim();
+        String qStr = qTextField.getText().trim();
+        String hStr = hTextField.getText().trim();
+
+        if (pStr.isEmpty() || qStr.isEmpty() || hStr.isEmpty()) {
+            showStatus("Missing parameter(s): p, q or h", "red");
+            return;
+        }
+
         //sprawdzenie, czy podany klucz ma odpowiedni rozmiar
         try {
             BigInteger keyBigInt = new BigInteger(hexKey);
+            BigInteger p = new BigInteger(pStr);
+            BigInteger q = new BigInteger(qStr);
+            BigInteger h = new BigInteger(hStr);
 
             byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
 
@@ -211,7 +249,6 @@ public class DESApp extends Application {
                 p = encryptor.getP();
                 q = encryptor.getQ();
                 h = encryptor.getH();
-                b = encryptor.getB();
                 signature = encryptor.getClenSignature();
 
                 String publicKey = encryptor.getB().toString();
@@ -231,6 +268,9 @@ public class DESApp extends Application {
                     keyTextField.setVisible(true);
                     //wyświetlenie klucza publicznego
                     keyTextField.setText(publicKey);
+                    pTextField.setText(p.toString());
+                    qTextField.setText(q.toString());
+                    hTextField.setText(h.toString());
                 }
             } catch (Exception e) {
                 showStatus("Error during the process: " + e.getMessage(), "red");
@@ -262,10 +302,23 @@ public class DESApp extends Application {
                     }
                 }
 
+                String pStr = pTextField.getText().trim();
+                String qStr = qTextField.getText().trim();
+                String hStr = hTextField.getText().trim();
+
+                if (pStr.isEmpty() || qStr.isEmpty() || hStr.isEmpty()) {
+                    showStatus("Missing parameter(s): p, q or h", "red");
+                    return;
+                }
+
                 BigInteger keyBigInt = new BigInteger(hexKey);
 
                 //odczytanie szyfrogramu z pliku
                 byte[] encryptedBytes = Files.readAllBytes(file.toPath());
+
+                BigInteger p = new BigInteger(pStr);
+                BigInteger q = new BigInteger(qStr);
+                BigInteger h = new BigInteger(hStr);
 
                 Decryptor decryptor = new Decryptor(signature, encryptedBytes, p, q, h, keyBigInt);
 
@@ -281,11 +334,7 @@ public class DESApp extends Application {
 
                 FileChooser saveChooser = new FileChooser();
                 saveChooser.setTitle("Save result to File");
-                String originalName = file.getName();
-                if (originalName.endsWith(".txt")) {
-                    originalName = originalName.substring(0, originalName.length() - 4);    //usuwanie formatu .enc, żeby wynikowy format był taki jak pliku przez szyfrowaniem
-                }
-                saveChooser.setInitialFileName(originalName);
+                saveChooser.setInitialFileName(file.getName() + ".txt");
                 File saveFile = saveChooser.showSaveDialog(primaryStage);
 
                 if (saveFile != null) {
