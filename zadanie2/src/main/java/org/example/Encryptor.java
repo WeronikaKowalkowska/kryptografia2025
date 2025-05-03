@@ -19,7 +19,6 @@
 package org.example;
 
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -50,7 +49,7 @@ public class Encryptor {
         return signature.toString();
     }
 
-    // podzielone ":"
+    // s1 i s2 są podzielone ":"
     public String getClenSignature() {
         return getSignature().replace("[", "").replace("]", "").replace(" ", "").replace(",", ":");
     }
@@ -71,35 +70,37 @@ public class Encryptor {
         return b;
     }
 
-    //konstrunktor
+    // konstrunktor
     public Encryptor(int L, byte[] message) {
-        m = message;
-        //skrót wiadomości liczony funkcją hashującą SHA 1 lub 2 - w naszym przypadku SHA 1
-        generate_params(L);
-        generate_signature();
-    }
-
-    private void generate_params(int L) {
         if (L > 512 && L <= 1024 && L % 64 == 0) {
             this.L = L;
         }
+        m = message;
+        generate_params();
+        generate_signature();
+    }
+
+    private void generate_params() {
         N = 160;
         boolean flaga = true;
-        while (flaga){
-            q = BigInteger.probablePrime(N, random); //tworzenie losowej liczby pierwszej o długości N
-            BigInteger k = BigInteger.ONE;
+        while (flaga) {
+            q = BigInteger.probablePrime(N, random); // tworzenie losowej liczby pierwszej o długości N
+
+            BigInteger k;
             do {
-                k = new BigInteger(L - N, random);
+                k = new BigInteger(L - q.bitLength(), random); // cześć całkowita z dzielenia p przez q
             } while (k.equals(BigInteger.ZERO)); // k nie może być zerem, bo wtedy p = 1, a jedynka nie jest liczbą pierwszą
-            this.p = q.multiply(k).add(BigInteger.ONE); // p - 1 = kq -> p = kq + 1
-            if (p.isProbablePrime(40)) {
+
+            p = q.multiply(k).add(BigInteger.ONE); // p - 1 = kq -> p = kq + 1
+            if (p.isProbablePrime(64)) {
                 flaga = false;
             }
         }
         BigInteger pMinusOne = p.subtract(BigInteger.ONE); // p-1 jak BigInteger
         do {
-            h = new BigInteger(N, random); // losowanie h aż będzie mniejsze lub równe p-1
-        } while (bigIntegerPow(h, (pMinusOne.divide(q)), p).equals(BigInteger.ONE)); // wszystkie liczby w {1, 2, ..., p-1} są w Z*_p, gdy p - liczba pierwsza
+            h = new BigInteger(p.bitLength(), random); // losowanie h aż będzie mniejsze lub równe p-1
+        } while (h.compareTo(BigInteger.ONE) <= 0 || h.compareTo(p) >= 0 || bigIntegerPow(h, (pMinusOne.divide(q)), p).equals(BigInteger.ONE)); // wszystkie liczby w {1, 2, ..., p-1} są w Z*_p, gdy p - liczba pierwsza
+        h = bigIntegerPow(h, p.subtract(BigInteger.ONE).divide(q), p); //TU BYŁ BŁĄD NIE WIEM DLACZEGO POTRZEBNA TA LINIJKA !!!!!!!!!!!
         do {
             a = new BigInteger(N, random); // losowanie a aż będzie mniejsze od q
         } while (a.compareTo(q) >= 0); // 0 < a < q
@@ -111,7 +112,7 @@ public class Encryptor {
         BigInteger r = null;
         BigInteger rPrim = null;
         boolean flaga = true;
-        while (flaga){
+        while (flaga) {
             do {
                 r = new BigInteger(N, random);
             } while (r.compareTo(BigInteger.ZERO) <= 0 || r.compareTo(q) >= 0); // 0 < r ≤ q - 1

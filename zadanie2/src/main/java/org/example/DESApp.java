@@ -175,7 +175,7 @@ public class DESApp extends Application {
 
             byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
 
-            Decryptor decryptor = new Decryptor(signature ,textBytes, p, q, h, keyBigInt);
+            Decryptor decryptor = new Decryptor(signature, textBytes, p, q, h, keyBigInt);
 
             boolean result = decryptor.isSignatureValid;
             String resultStr = null;
@@ -262,12 +262,12 @@ public class DESApp extends Application {
                     }
                 }
 
-                 BigInteger keyBigInt = new BigInteger(hexKey);
+                BigInteger keyBigInt = new BigInteger(hexKey);
 
                 //odczytanie szyfrogramu z pliku
                 byte[] encryptedBytes = Files.readAllBytes(file.toPath());
 
-                Decryptor decryptor = new Decryptor(signature ,encryptedBytes, p, q, h, keyBigInt);
+                Decryptor decryptor = new Decryptor(signature, encryptedBytes, p, q, h, keyBigInt);
 
                 boolean result = decryptor.isSignatureValid;
                 String resultStr = null;

@@ -19,7 +19,6 @@
 package org.example;
 
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 public class Decryptor {
@@ -52,11 +51,12 @@ public class Decryptor {
         } else {
             throw new ArithmeticException("s2 i q nie są względnie pierwsze, brak odwrotności.");
         }
-        BigInteger u1 = hash_message(m).multiply(sPrim).mod(q);
-        BigInteger u2 = sPrim.multiply(s1).mod(q);
+        BigInteger f = hash_message(m);
+        BigInteger u1 = (f.multiply(sPrim)).mod(q);
+        BigInteger u2 = (sPrim.multiply(s1)).mod(q);
         BigInteger hu1 = bigIntegerPow(h, u1, p);
         BigInteger bu2 = bigIntegerPow(b, u2, p);
-        BigInteger t = hu1.multiply(bu2).mod(p).mod(q);
+        BigInteger t = ((hu1.multiply(bu2)).mod(p)).mod(q);
         return t.equals(s1);
     }
 
