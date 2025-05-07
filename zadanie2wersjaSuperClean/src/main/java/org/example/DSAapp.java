@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class DESApp extends Application {
+public class DSAapp extends Application {
 
     private ComboBox<Integer> keySizeComboBox;
     private TextArea inputTextArea;
@@ -59,7 +59,7 @@ public class DESApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("AES Encryption/Decryption");
+        primaryStage.setTitle("DSA (Digital Signature Algorithm)");
 
         keySizeComboBox = new ComboBox<>();
         keySizeComboBox.getItems().addAll(640, 768, 1024);
